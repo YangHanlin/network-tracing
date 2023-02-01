@@ -1,0 +1,7 @@
+# Daemon dependencies
+bcc
+flask
+flask-cors
+
+# CLI dependencies
+requests

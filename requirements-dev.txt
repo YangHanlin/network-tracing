@@ -1,0 +1,5 @@
+# Development dependencies
+yapf
+# https://github.com/pypa/setuptools/issues/3772
+setuptools<66.0
+wheel

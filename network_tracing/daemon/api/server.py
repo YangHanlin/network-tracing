@@ -14,6 +14,7 @@ from network_tracing.common.utilities import DictConversionMixin
 class ApiServerConfig(DictConversionMixin):
     host: str = field(default='0.0.0.0')
     port: int = field(default=10032)
+    cors: bool = field(default=False)
 
 
 class _ServerThread(Thread):
@@ -34,7 +35,7 @@ class ApiServer(BackgroundTask):
 
     def __init__(self, config: ApiServerConfig) -> None:
         self._config = config
-        self._app = ApiServer._create_app()
+        self._app = ApiServer._create_app(self._config)
         self._thread: _ServerThread | None = None
         self._lock = Lock()
 
@@ -62,9 +63,10 @@ class ApiServer(BackgroundTask):
             thread.shutdown()
 
     @staticmethod
-    def _create_app() -> Flask:
+    def _create_app(config: ApiServerConfig) -> Flask:
         app = Flask('.'.join(__name__.split('.')[:-1]))
-        CORS(app)
+        if config.cors:
+            CORS(app)
         for blueprint in blueprints:
             app.register_blueprint(blueprint)
         return app

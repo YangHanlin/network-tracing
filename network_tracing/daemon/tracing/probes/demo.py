@@ -3,18 +3,18 @@ from threading import Thread
 from time import sleep
 from datetime import datetime
 
-from network_tracing.common.utilities import DictConversionMixin
+from network_tracing.common.utilities import DataclassConversionMixin
 from network_tracing.daemon.tracing.probes.common import BaseProbe, EventCallback
 from typing import Any, Optional, Union
 
 
 @dataclass
-class ProbeOptions(DictConversionMixin):
+class ProbeOptions(DataclassConversionMixin):
     interval: float = field(default=1.0)
 
 
 @dataclass
-class ProbeEvent(DictConversionMixin):
+class ProbeEvent(DataclassConversionMixin):
     current_time: str
 
 
@@ -25,11 +25,12 @@ class Probe(BaseProbe):
         super().__init__(event_callback)
         if options is None:
             self._options: ProbeOptions = ProbeOptions()
-        elif type(options) == dict:
-            self._options: ProbeOptions = ProbeOptions.from_dict(
-                options)  # type: ignore
+        elif isinstance(options, dict):
+            self._options: ProbeOptions = ProbeOptions.from_dict(options)
+        elif isinstance(options, ProbeOptions):
+            self._options: ProbeOptions = options
         else:
-            self._options: ProbeOptions = options  # type: ignore
+            raise RuntimeError('Invalid options {}'.format(options))
         self._thread: Optional[Thread] = None
         self._running: bool = False
 
@@ -42,7 +43,7 @@ class Probe(BaseProbe):
                     ProbeEvent(current_time=datetime.now().strftime('%c')))
 
         self._running = True
-        self._thread = Thread(target=run_async)
+        self._thread = Thread(target=run_async, daemon=True)
         self._thread.start()
 
     def stop(self) -> None:

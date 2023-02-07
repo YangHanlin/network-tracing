@@ -3,15 +3,16 @@ from threading import Thread, Lock
 from wsgiref.simple_server import make_server
 
 from flask import Flask
+from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 
 from network_tracing.daemon.api.views import blueprints
 from network_tracing.daemon.common import BackgroundTask
-from network_tracing.common.utilities import DictConversionMixin
+from network_tracing.common.utilities import DataclassConversionMixin
 
 
 @dataclass
-class ApiServerConfig(DictConversionMixin):
+class ApiServerConfig(DataclassConversionMixin):
     host: str = field(default='0.0.0.0')
     port: int = field(default=10032)
     cors: bool = field(default=False)
@@ -29,6 +30,14 @@ class _ServerThread(Thread):
 
     def shutdown(self):
         self._server.shutdown()
+
+
+class _ServerJsonProvider(DefaultJSONProvider):
+
+    def __init__(self, app: Flask) -> None:
+        super().__init__(app)
+        self.default = lambda o: o.to_dict() if isinstance(
+            o, DataclassConversionMixin) else super().default(o)
 
 
 class ApiServer(BackgroundTask):
@@ -65,6 +74,7 @@ class ApiServer(BackgroundTask):
     @staticmethod
     def _create_app(config: ApiServerConfig) -> Flask:
         app = Flask('.'.join(__name__.split('.')[:-1]))
+        app.json = _ServerJsonProvider(app)
         if config.cors:
             CORS(app)
         for blueprint in blueprints:

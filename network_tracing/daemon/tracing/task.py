@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from queue import Queue
 from typing import Any, Union
-from network_tracing.common.utilities import DictConversionMixin
+from network_tracing.common.utilities import DataclassConversionMixin
 from network_tracing.daemon.common import BackgroundTask
 from network_tracing.daemon.tracing.probes import probe_factories
 
 
 @dataclass
-class TracingTaskOptions(DictConversionMixin):
+class TracingTaskOptions(DataclassConversionMixin):
 
     probes: dict[str, Any]
 
@@ -15,7 +15,7 @@ class TracingTaskOptions(DictConversionMixin):
 class TracingTask(BackgroundTask):
 
     def __init__(self, options: TracingTaskOptions) -> None:
-        self._event_queue = Queue()
+        self._event_queue: Queue[tuple[str, Any]] = Queue()
         self._options = options
         self._probes = self._bulid_probes(options.probes)
 
@@ -33,7 +33,7 @@ class TracingTask(BackgroundTask):
 
     def poll_event(self,
                    blocking: bool = False,
-                   timeout: Union[float, None] = None) -> Any:
+                   timeout: Union[float, None] = None):
         return self._event_queue.get(block=blocking, timeout=timeout)
 
     def _bulid_probes(self,
@@ -44,10 +44,7 @@ class TracingTask(BackgroundTask):
             if probe_factory is None:
                 raise RuntimeError(
                     'Cannot find probe with type \'{}\''.format(probe_type))
-
-            def event_callback(event: Any) -> None:
-                event.probe_type = probe_type
-                self._event_queue.put(event)
-
+            event_callback = lambda event: self._event_queue.put(
+                (probe_type, event))
             probes[probe_type] = probe_factory(event_callback, probe_options)
         return probes

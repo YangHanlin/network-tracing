@@ -1,6 +1,4 @@
-from dataclasses import dataclass, field
-from typing import Callable, Any, Optional
-from network_tracing.common.utilities import DictConversionMixin
+from typing import Callable, Any
 from network_tracing.daemon.common import BackgroundTask
 
 EventCallback = Callable[..., Any]

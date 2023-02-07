@@ -5,6 +5,7 @@ from os import PathLike
 from typing import Any, Optional
 
 from network_tracing.common.utilities import DictConversionMixin
+from network_tracing.daemon import utilities
 from network_tracing.daemon.api.server import ApiServerConfig, ApiServer
 from network_tracing.daemon.common import BackgroundTask
 
@@ -47,6 +48,7 @@ class Application:
             instance = super(Application, cls).__new__(cls)
             instance.__init__(*args, **kwargs)
             Application.instance = instance
+            utilities.current_app = instance
         return Application.instance
 
     def __init__(self, config: ApplicationConfig) -> None:

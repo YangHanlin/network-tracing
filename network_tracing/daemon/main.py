@@ -1,8 +1,17 @@
 from argparse import ArgumentParser
+import logging
+import logging.config
+from signal import signal, SIGINT, SIGTERM
 import sys
 import threading
+from typing import Callable
 
 from network_tracing.daemon.app import Application, ApplicationConfig
+from network_tracing.daemon.common import default_logging_config
+
+logging.config.dictConfig(default_logging_config)
+
+logger = logging.getLogger(__name__)
 
 
 def _create_parser() -> ArgumentParser:
@@ -15,22 +24,55 @@ def _create_parser() -> ArgumentParser:
     return parser
 
 
-def main():
+def _parse_args():
     parser = _create_parser()
     args = parser.parse_args()
-    config = ApplicationConfig.load_file(args.config)
-    application = Application(config)
-    application.start()
-    print(
-        'Daemon started; send SIGINT (run `kill -3` or press Ctrl + C) to stop'
-    )
-    try:
-        forever = threading.Event()
-        forever.wait()
-    except KeyboardInterrupt:
-        print('Stopping')
-        application.stop()
-        sys.exit(0)
+    return args
+
+
+def _create_start_app(config_file_path: str) -> Application:
+    logger.info('Loading config file %s', config_file_path)
+    config = ApplicationConfig.load_file(config_file_path)
+
+    app = Application(config)
+    app.start()
+
+    signal_handler = _create_signal_handler(app)
+    signal(SIGINT, signal_handler)
+    signal(SIGTERM, signal_handler)
+
+    logger.info(
+        'Application started; press Ctrl + C or send SIGINT/SIGTERM to exit')
+
+    return app
+
+
+def _wait_forever():
+    forever = threading.Event()
+    forever.wait()
+
+
+def _create_signal_handler(app: Application) -> Callable:
+    ignore = lambda sig, stack: None
+
+    def signal_handler(sig, stack):
+        logger.info('Gracefully shutting down')
+        signal(SIGINT, ignore)
+        signal(SIGTERM, ignore)
+        try:
+            app.stop()
+            sys.exit(0)
+        except Exception:
+            logger.error('Graceful shutdown failed', exc_info=True)
+            sys.exit(1)
+
+    return signal_handler
+
+
+def main():
+    args = _parse_args()
+    _create_start_app(args.config)
+    _wait_forever()
 
 
 if __name__ == '__main__':

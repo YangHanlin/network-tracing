@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
+import logging
 from threading import Thread, Lock
-from wsgiref.simple_server import make_server
+from werkzeug.serving import make_server
 
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
@@ -23,9 +24,15 @@ class _ServerThread(Thread):
 
     def __init__(self, app: Flask, host: str, port: int, **options) -> None:
         super().__init__()
-        self._server = make_server(host, port, app, **options)
+        self._host = host
+        self._port = port
+        self._app = app
+        self._server = make_server(self._host, self._port, self._app,
+                                   **options)
 
     def run(self):
+        self._app.logger.info('API service listening on %s:%d', self._host,
+                              self._port)
         self._server.serve_forever()
 
     def shutdown(self):
@@ -47,6 +54,7 @@ class ApiServer(BackgroundTask):
         self._app = ApiServer._create_app(self._config)
         self._thread: _ServerThread | None = None
         self._lock = Lock()
+        ApiServer._configure_werkzeug_logging()
 
     @property
     def config(self) -> ApiServerConfig:
@@ -86,3 +94,11 @@ class ApiServer(BackgroundTask):
         thread = _ServerThread(app, config.host, config.port)
         thread.daemon = True
         return thread
+
+    @staticmethod
+    def _configure_werkzeug_logging() -> None:
+        """Configure the logger used by Werkzeug to stay consistent with other loggers."""
+        werkzeug_logger = logging.getLogger('werkzeug')
+        werkzeug_logger.setLevel(logging.INFO)
+        werkzeug_logger.handlers = logging.root.handlers
+        werkzeug_logger.propagate = False

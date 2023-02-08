@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from functools import cache
+import logging
 from pathlib import Path
 from socket import AF_INET, inet_ntop
 from struct import pack
@@ -11,6 +12,8 @@ from bcc import BPF
 from network_tracing.common.utilities import DataclassConversionMixin
 from network_tracing.daemon.common import KernelSymbol
 from network_tracing.daemon.tracing.probes.common import BaseProbe, EventCallback
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -207,6 +210,9 @@ class Probe(BaseProbe):
         if dev_queue_xmit_symbol is not None and dev_queue_xmit_symbol.symbol_type == 'T':
             dev_queue_xmit_event = b'dev_queue_xmit'
         else:
+            logger.warn(
+                'Attaching kprobe to __dev_queue_xmit instead of dev_queue_xmit'
+            )
             dev_queue_xmit_event = b'__dev_queue_xmit'
 
         return {

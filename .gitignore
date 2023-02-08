@@ -259,3 +259,7 @@ tags
 # Ignore all local history of files
 .history
 .ionide
+
+### Project specific ###
+/*venv/
+config.json

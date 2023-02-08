@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from queue import Queue
-from typing import Any, Union
+from typing import Any, Callable, Union
 from network_tracing.common.utilities import DataclassConversionMixin
 from network_tracing.daemon.common import BackgroundTask
 from network_tracing.daemon.tracing.probes import probe_factories
@@ -44,7 +44,9 @@ class TracingTask(BackgroundTask):
             if probe_factory is None:
                 raise RuntimeError(
                     'Cannot find probe with type \'{}\''.format(probe_type))
-            event_callback = lambda event: self._event_queue.put(
-                (probe_type, event))
+            event_callback = self._build_event_callback(probe_type)
             probes[probe_type] = probe_factory(event_callback, probe_options)
         return probes
+
+    def _build_event_callback(self, probe_type: str) -> Callable:
+        return lambda event: self._event_queue.put((probe_type, event))

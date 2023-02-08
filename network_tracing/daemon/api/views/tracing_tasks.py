@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from flask import Blueprint, request
 from network_tracing.common.utilities import DataclassConversionMixin
+from network_tracing.daemon.api.common import ApiException
 from network_tracing.daemon.common import global_state
 
 from network_tracing.daemon.tracing.task import TracingTask, TracingTaskOptions
@@ -23,7 +24,8 @@ def find_tracing_task(id: str) -> tuple[str, TracingTask]:
     task = global_state.application.tasks.get(task_key, None)
 
     if task is None:
-        raise RuntimeError('Cannot find tracing task with id {}'.format(id))
+        raise ApiException(
+            'Cannot find tracing task with id \'{}\''.format(id), 404)
 
     if not isinstance(task, TracingTask):
         raise RuntimeError('Task with key {} is not an instance of {}'.format(

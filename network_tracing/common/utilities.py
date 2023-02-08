@@ -21,7 +21,7 @@ class DataclassConversionMixin:
         args = json.loads(data)
         return cls.from_dict(args)
 
-    def to_json(self) -> str:
+    def to_json(self: Any) -> str:
         if isinstance(self, DataclassConversionMixin):
             encoder_class = self._JsonEncoder
         else:

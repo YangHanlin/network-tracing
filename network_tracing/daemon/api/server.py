@@ -1,15 +1,20 @@
 from dataclasses import dataclass, field
 import logging
 from threading import Thread, Lock
+from typing import Optional
+from werkzeug.exceptions import HTTPException
 from werkzeug.serving import make_server
 
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
+from network_tracing.daemon.api.common import ApiException
 
 from network_tracing.daemon.api.views import blueprints
 from network_tracing.daemon.common import BackgroundTask
 from network_tracing.common.utilities import DataclassConversionMixin
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -17,6 +22,11 @@ class ApiServerConfig(DataclassConversionMixin):
     host: str = field(default='0.0.0.0')
     port: int = field(default=10032)
     cors: bool = field(default=False)
+
+
+@dataclass
+class _GeneralErrorResponse(DataclassConversionMixin):
+    message: Optional[str] = field(default=None)
 
 
 class _ServerThread(Thread):
@@ -87,6 +97,8 @@ class ApiServer(BackgroundTask):
             CORS(app)
         for blueprint in blueprints:
             app.register_blueprint(blueprint)
+        app.register_error_handler(
+            HTTPException, ApiServer._http_exception_handler)  # type: ignore
         return app
 
     @staticmethod
@@ -102,3 +114,12 @@ class ApiServer(BackgroundTask):
         werkzeug_logger.setLevel(logging.INFO)
         werkzeug_logger.handlers = logging.root.handlers
         werkzeug_logger.propagate = False
+
+    @staticmethod
+    def _http_exception_handler(exception: HTTPException):
+        logger.debug('Encountered an HTTPException', exc_info=exception)
+        response = exception.get_response()
+        response.data = _GeneralErrorResponse(  # type: ignore
+            message=exception.description).to_json()
+        response.content_type = 'application/json; encoding=utf-8'
+        return response

@@ -70,7 +70,7 @@ static void get_pkt_tuple(struct packet_tuple *pkt_tuple, struct iphdr *ip, stru
     pkt_tuple->ack = ntohl(ack);
 } 
 
-int kprobe____tcp_transmit_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, int clone_it, gfp_t gfp_mask, u32 rcv_nxt){
+int on___tcp_transmit_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, int clone_it, gfp_t gfp_mask, u32 rcv_nxt){
     u16 family = sk->__sk_common.skc_family;
 
     if (family == AF_INET) {
@@ -106,7 +106,7 @@ int kprobe____tcp_transmit_skb(struct pt_regs *ctx, struct sock *sk, struct sk_b
     return 0;
 }
 
-int kprobe__ip_queue_xmit(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb){
+int on_ip_queue_xmit(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb){
     u16 family = sk->__sk_common.skc_family;
 
     if (family == AF_INET) {
@@ -136,7 +136,7 @@ int kprobe__ip_queue_xmit(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
     return 0;
 }
 
-int kprobe__dev_queue_xmit(struct pt_regs *ctx, struct sk_buff *skb){
+int on_dev_queue_xmit(struct pt_regs *ctx, struct sk_buff *skb){
     struct iphdr *ip = skb_to_iphdr(skb);
     struct tcphdr *tcp = skb_to_tcphdr(skb);
     struct packet_tuple pkt_tuple = {};
@@ -154,7 +154,7 @@ int kprobe__dev_queue_xmit(struct pt_regs *ctx, struct sk_buff *skb){
     return 0;
 }
 
-int kprobe__dev_hard_start_xmit(struct pt_regs *ctx, struct sk_buff *skb){
+int on_dev_hard_start_xmit(struct pt_regs *ctx, struct sk_buff *skb){
     struct iphdr *ip = skb_to_iphdr(skb);
     struct tcphdr *tcp = skb_to_tcphdr(skb);
     struct packet_tuple pkt_tuple = {};

@@ -1,13 +1,15 @@
 from dataclasses import dataclass, field
-from gc import is_finalized
+from functools import cache
 from pathlib import Path
-from socket import AF_INET, AF_NETBEUI, inet_ntop
+from socket import AF_INET, inet_ntop
 from struct import pack
 from threading import Lock, Thread
+from time import sleep
 from typing import Any, Optional, Union, cast
 
 from bcc import BPF
 from network_tracing.common.utilities import DataclassConversionMixin
+from network_tracing.daemon.common import KernelSymbol
 from network_tracing.daemon.tracing.probes.common import BaseProbe, EventCallback
 
 
@@ -71,7 +73,7 @@ class ProbeEvent(DataclassConversionMixin):
         parsed_event = cls.ParsedProbeEvent(
             saddr=inet_ntop(AF_INET, pack('I', raw_event.saddr)),
             sport=raw_event.sport,
-            daddr=inet_ntop(AF_NETBEUI, pack('I', raw_event.daddr)),
+            daddr=inet_ntop(AF_INET, pack('I', raw_event.daddr)),
             dport=raw_event.dport,
             seq=raw_event.seq,
             ack=raw_event.ack,
@@ -107,6 +109,9 @@ class Probe(BaseProbe):
             if self._thread is not None:
                 return
 
+            for fn_name, event in Probe._get_kprobe_names().items():
+                self._bpf.attach_kprobe(fn_name=fn_name, event=event)
+
             self._thread = Thread(target=run_async, daemon=True)
             self._thread.start()
 
@@ -118,8 +123,14 @@ class Probe(BaseProbe):
             thread, self._thread = self._thread, None
             for _ in range(30):
                 if not thread.is_alive():
-                    return
-            raise RuntimeError('Failed to stop')
+                    break
+                sleep(1)
+            else:
+                if thread.is_alive():
+                    raise RuntimeError('Failed to stop')
+
+            for fn_name, event in Probe._get_kprobe_names().items():
+                self._bpf.detach_kprobe(fn_name=fn_name, event=event)
 
     def _perf_buffer_callback(self, cpu, data, size):
         event_data = self._bpf[Probe._PERF_BUFFER_NAME].event(data)
@@ -136,7 +147,7 @@ class Probe(BaseProbe):
             ip_time=event_data.ip_time,
             tcp_time=event_data.tcp_time)
         event = ProbeEvent.from_raw_event(raw_event)
-        return event
+        self._submit_event(event)
 
     @staticmethod
     def _build_bpf(options: ProbeOptions) -> BPF:
@@ -185,3 +196,22 @@ class Probe(BaseProbe):
         else:
             raise RuntimeError(
                 'Unrecognized type of options {}'.format(options))
+
+    @cache
+    @staticmethod
+    def _get_kprobe_names() -> dict[bytes, bytes]:
+        # dev_queue_xmit() is inlined on newer kernels; use __dev_queue_xmit() in these cases
+        # See also: https://github.com/torvalds/linux/commit/c526fd8f9f4f21cb83c0b1c9a1ee9c0ac9be9e2e
+        dev_queue_xmit_symbol = KernelSymbol.find_by_symbol_name(
+            'dev_queue_xmit')
+        if dev_queue_xmit_symbol is not None and dev_queue_xmit_symbol.symbol_type == 'T':
+            dev_queue_xmit_event = b'dev_queue_xmit'
+        else:
+            dev_queue_xmit_event = b'__dev_queue_xmit'
+
+        return {
+            b'on___tcp_transmit_skb': b'__tcp_transmit_skb',
+            b'on_ip_queue_xmit': b'ip_queue_xmit',
+            b'on_dev_queue_xmit': dev_queue_xmit_event,
+            b'on_dev_hard_start_xmit': b'dev_hard_start_xmit',
+        }

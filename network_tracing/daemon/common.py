@@ -49,7 +49,7 @@ class KernelSymbol:
     def find_all() -> Iterable['KernelSymbol']:
         with open('/proc/kallsyms', 'r') as fp:
             for line in fp:
-                segments = line.strip().split(maxsplit=4)
+                segments = line.strip().split(maxsplit=3)
                 symbol_address, symbol_type, symbol_name = segments[:3]
                 symbol_address = int(symbol_address, 16)
                 if len(segments) > 3:

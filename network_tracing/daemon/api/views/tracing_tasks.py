@@ -64,12 +64,6 @@ class TracingTaskResponse(DataclassConversionMixin):
 
 
 @dataclass
-class TracingEventResponse(DataclassConversionMixin):
-    probe: str
-    event: Any
-
-
-@dataclass
 class TracingTaskIdResponse(DataclassConversionMixin):
     id: str
 
@@ -93,12 +87,13 @@ def get_tracing_task(id: str):
 @tracing_tasks.get('/<id>/events')
 def get_tracing_task_events(id: str):
     _, task = find_tracing_task(id)
+    event_poller = task.get_event_poller()
 
     def generate():
-        while True:
-            probe_type, event = task.poll_event(blocking=True)
-            yield TracingEventResponse(probe=probe_type,
-                                       event=event).to_json() + '\n'
+        with event_poller:
+            while True:
+                event = event_poller.poll_event(block=True)
+                yield event.to_json() + '\n'
 
     return generate(), {
         'Content-Type': 'application/json-lines+json; encoding=utf-8',

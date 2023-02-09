@@ -103,7 +103,7 @@ class ApiServer(BackgroundTask):
 
     @staticmethod
     def _create_thread(app: Flask, config: ApiServerConfig) -> _ServerThread:
-        thread = _ServerThread(app, config.host, config.port)
+        thread = _ServerThread(app, config.host, config.port, threaded=True)
         thread.daemon = True
         return thread
 

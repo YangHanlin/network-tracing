@@ -1,18 +1,17 @@
-from dataclasses import dataclass, field
 import logging
-from threading import Thread, Lock
+from dataclasses import dataclass, field
+from threading import Lock, Thread
 from typing import Optional
-from werkzeug.exceptions import HTTPException
-from werkzeug.serving import make_server
 
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
-from network_tracing.daemon.api.common import ApiException
+from werkzeug.exceptions import HTTPException
+from werkzeug.serving import make_server
 
-from network_tracing.daemon.api.views import blueprints
-from network_tracing.daemon.common import BackgroundTask
 from network_tracing.common.utilities import DataclassConversionMixin
+from network_tracing.daemon.api.views import blueprints
+from network_tracing.daemon.models import BackgroundTask
 
 logger = logging.getLogger(__name__)
 

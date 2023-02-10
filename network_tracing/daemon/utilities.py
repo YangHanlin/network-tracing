@@ -1,33 +1,7 @@
-from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import Iterable, Optional, Protocol
 
-
-class BackgroundTask(Protocol):
-
-    @abstractmethod
-    def start(self) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def stop(self) -> None:
-        raise NotImplementedError
-
-
-class _Application(Protocol):
-    """An interface for `network_tracing.daemon.app.Application` to avoid circular imports."""
-
-    @property
-    def tasks(self) -> dict[str, BackgroundTask]:
-        raise NotImplementedError
-
-
-@dataclass
-class _GlobalState:
-    application: Optional[_Application] = field(default=None)
-
-
-global_state = _GlobalState()
+from network_tracing.daemon.models import BackgroundTask
 
 
 @dataclass
@@ -70,26 +44,17 @@ class KernelSymbol:
         return None
 
 
-DEFAULT_LOGGING_CONFIG = {
-    'version': 1,
-    'formatters': {
-        'default': {
-            'format': '[{asctime} {levelname:1.1}] {module:6}: {message}',
-            'style': '{',
-            'validate': True,
-        },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'stream': 'ext://sys.stdout',
-            'formatter': 'default',
-        }
-    },
-    'root': {
-        'level': 'INFO',
-        'handlers': [
-            'console',
-        ],
-    },
-}
+class _Application(Protocol):
+    """An interface for `network_tracing.daemon.app.Application` to avoid circular imports."""
+
+    @property
+    def tasks(self) -> dict[str, BackgroundTask]:
+        raise NotImplementedError
+
+
+@dataclass
+class _GlobalState:
+    application: Optional[_Application] = field(default=None)
+
+
+global_state = _GlobalState()

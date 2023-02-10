@@ -1,5 +1,6 @@
-from typing import Callable, Any
-from network_tracing.daemon.common import BackgroundTask
+from typing import Any, Callable
+
+from network_tracing.daemon.models import BackgroundTask
 
 EventCallback = Callable[..., Any]
 

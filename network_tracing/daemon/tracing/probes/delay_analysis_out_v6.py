@@ -1,6 +1,6 @@
+import logging
 from dataclasses import dataclass, field
 from functools import cache
-import logging
 from pathlib import Path
 from socket import AF_INET6, inet_ntop
 from threading import Lock, Thread
@@ -8,9 +8,11 @@ from time import sleep
 from typing import Any, Optional, Union, cast
 
 from bcc import BPF
+
 from network_tracing.common.utilities import DataclassConversionMixin
-from network_tracing.daemon.common import KernelSymbol
-from network_tracing.daemon.tracing.probes.common import BaseProbe, EventCallback
+from network_tracing.daemon.tracing.probes.models import (BaseProbe,
+                                                          EventCallback)
+from network_tracing.daemon.utilities import KernelSymbol
 
 logger = logging.getLogger(__name__)
 

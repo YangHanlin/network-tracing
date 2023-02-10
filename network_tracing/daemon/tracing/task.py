@@ -4,7 +4,7 @@ from queue import Queue
 from typing import Any, Callable, Optional
 
 from network_tracing.common.models import TracingEvent, TracingTaskOptions
-from network_tracing.daemon.common import BackgroundTask
+from network_tracing.daemon.models import BackgroundTask
 from network_tracing.daemon.tracing.probes import probe_factories
 
 

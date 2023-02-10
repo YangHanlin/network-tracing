@@ -7,7 +7,7 @@ from signal import SIGINT, SIGTERM, signal
 from typing import Callable
 
 from network_tracing.daemon.app import Application, ApplicationConfig
-from network_tracing.daemon.common import DEFAULT_LOGGING_CONFIG
+from network_tracing.daemon.constants import DEFAULT_LOGGING_CONFIG
 
 logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
 

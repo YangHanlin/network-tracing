@@ -4,7 +4,7 @@ from time import sleep
 from datetime import datetime
 
 from network_tracing.common.utilities import DataclassConversionMixin
-from network_tracing.daemon.tracing.probes.common import BaseProbe, EventCallback
+from network_tracing.daemon.tracing.probes.models import BaseProbe, EventCallback
 from typing import Any, Optional, Union
 
 

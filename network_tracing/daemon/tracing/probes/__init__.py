@@ -1,4 +1,4 @@
-from network_tracing.daemon.tracing.probes.common import ProbeFactory
+from network_tracing.daemon.tracing.probes.models import ProbeFactory
 from . import demo, delay_analysis_in, delay_analysis_in_v6, delay_analysis_out, delay_analysis_out_v6
 
 probe_factories: dict[str, ProbeFactory] = {

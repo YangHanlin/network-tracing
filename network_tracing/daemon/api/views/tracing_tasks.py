@@ -1,13 +1,17 @@
-from dataclasses import dataclass
 from typing import Any, cast
 from uuid import uuid4
 
 from flask import Blueprint, request
-from network_tracing.common.utilities import DataclassConversionMixin
+
+from network_tracing.common.models import (CreateTracingTaskRequest,
+                                           CreateTracingTaskResponse,
+                                           GetTracingTaskResponse,
+                                           ListTracingTasksResponse,
+                                           TracingTaskOptions,
+                                           TracingTaskResponse)
 from network_tracing.daemon.api.common import ApiException
 from network_tracing.daemon.common import global_state
-
-from network_tracing.daemon.tracing.task import TracingTask, TracingTaskOptions
+from network_tracing.daemon.tracing.task import TracingTask
 
 TRACING_TASK_PREFIX = 'tracing_tasks/'
 
@@ -57,20 +61,9 @@ def insert_tracing_task(task: TracingTask) -> str:
     return id
 
 
-@dataclass
-class TracingTaskResponse(DataclassConversionMixin):
-    id: str
-    options: TracingTaskOptions
-
-
-@dataclass
-class TracingTaskIdResponse(DataclassConversionMixin):
-    id: str
-
-
 @tracing_tasks.get('')
 @tracing_tasks.get('/')
-def list_tracing_tasks():
+def list_tracing_tasks() -> ListTracingTasksResponse:
     return [
         TracingTaskResponse(id=id, options=task.options)
         for id, task in find_all_tracing_tasks().items()
@@ -81,7 +74,7 @@ def list_tracing_tasks():
 def get_tracing_task(id: str):
     _, task = find_tracing_task(id)
     # .to_dict() is added here only to make type checker happy
-    return TracingTaskResponse(id=id, options=task.options).to_dict()
+    return GetTracingTaskResponse(id=id, options=task.options).to_dict()
 
 
 @tracing_tasks.get('/<id>/events')
@@ -103,12 +96,13 @@ def get_tracing_task_events(id: str):
 @tracing_tasks.post('')
 @tracing_tasks.post('/')
 def create_tracing_task():
-    task = TracingTask(
-        TracingTaskOptions.from_dict(cast(dict[str, Any], request.json)))
+    options: TracingTaskOptions = CreateTracingTaskRequest.from_dict(
+        cast(dict[str, Any], request.json))
+    task = TracingTask(options)
     task.start()
     id = insert_tracing_task(task)
 
-    return TracingTaskIdResponse(id=id).to_dict()
+    return CreateTracingTaskResponse(id=id).to_dict()
 
 
 @tracing_tasks.delete('/<id>')

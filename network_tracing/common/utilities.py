@@ -1,6 +1,7 @@
-from dataclasses import fields, is_dataclass, asdict
+import importlib.metadata
 import json
-from typing import Any
+from dataclasses import asdict, fields, is_dataclass
+from typing import Any, NoReturn
 
 
 class DataclassConversionMixin:
@@ -40,3 +41,16 @@ class DataclassConversionMixin:
             if isinstance(o, DataclassConversionMixin):
                 o = o.to_dict()
             return o
+
+
+class Metadata:
+
+    def __new__(cls: type['Metadata']) -> NoReturn:
+        raise Exception('No instantiation for this class')
+
+    @staticmethod
+    def get_package_name_and_version() -> tuple[str, str]:
+        package_name = __name__.split('.', maxsplit=1)[0]
+        package_version = importlib.metadata.version(package_name)
+
+        return package_name, package_version

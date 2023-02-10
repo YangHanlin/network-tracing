@@ -1,34 +1,11 @@
 from collections import deque
-from dataclasses import dataclass, field
 from datetime import datetime
 from queue import Queue
 from typing import Any, Callable, Optional
-from network_tracing.common.utilities import DataclassConversionMixin
+
+from network_tracing.common.models import TracingEvent, TracingTaskOptions
 from network_tracing.daemon.common import BackgroundTask
 from network_tracing.daemon.tracing.probes import probe_factories
-
-
-@dataclass
-class TracingEvent(DataclassConversionMixin):
-    timestamp: float
-    probe: str
-    event: Any
-
-
-@dataclass
-class TracingTaskEventOptions(DataclassConversionMixin):
-    buffer_length: int = field(default=100)
-
-
-@dataclass
-class TracingTaskOptions(DataclassConversionMixin):
-    probes: dict[str, Any]
-    events: TracingTaskEventOptions = field(
-        default_factory=TracingTaskEventOptions)
-
-    def __post_init__(self):
-        if isinstance(self.events, dict):
-            self.events = TracingTaskEventOptions.from_dict(self.events)
 
 
 class TracingEventPoller:

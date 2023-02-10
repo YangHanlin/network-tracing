@@ -1,21 +1,13 @@
-from dataclasses import dataclass
-import importlib.metadata
 from flask import Blueprint
 
-from network_tracing.common.utilities import DataclassConversionMixin
+from network_tracing.common.models import DaemonInfoResponse
+from network_tracing.common.utilities import Metadata
 
 index = Blueprint('index', __name__)
 
 
-@dataclass
-class BasicInformation(DataclassConversionMixin):
-    name: str
-    version: str
-
-
 @index.get('/')
-def get_basic_information():
-    top_package = __package__.split('.', maxsplit=1)[0]
-    name = '{} daemon'.format(top_package)
-    version = importlib.metadata.version(top_package)
-    return BasicInformation(name=name, version=version).to_dict()
+def get_daemon_info():
+    package_name, package_version = Metadata.get_package_name_and_version()
+    name = '{} daemon'.format(package_name)
+    return DaemonInfoResponse(name=name, version=package_version).to_dict()

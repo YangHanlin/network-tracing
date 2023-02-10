@@ -70,7 +70,7 @@ class KernelSymbol:
         return None
 
 
-default_logging_config = {
+DEFAULT_LOGGING_CONFIG = {
     'version': 1,
     'formatters': {
         'default': {

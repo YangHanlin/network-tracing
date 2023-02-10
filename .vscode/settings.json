@@ -1,4 +1,5 @@
 {
+    "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "modificationsIfAvailable",
     "python.formatting.provider": "yapf",
 }

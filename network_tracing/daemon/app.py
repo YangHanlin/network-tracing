@@ -1,20 +1,21 @@
-from copy import deepcopy
-from dataclasses import dataclass, field
 import logging
 import logging.config
+from copy import deepcopy
+from dataclasses import dataclass, field
 from os import PathLike
 from typing import Union, cast
 
 from network_tracing.common.utilities import DataclassConversionMixin
-from network_tracing.daemon.api.server import ApiServerConfig, ApiServer
-from network_tracing.daemon.common import BackgroundTask, global_state, default_logging_config
+from network_tracing.daemon.api.server import ApiServer, ApiServerConfig
+from network_tracing.daemon.common import (DEFAULT_LOGGING_CONFIG,
+                                           BackgroundTask, global_state)
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(kw_only=True)
 class LoggingConfig(DataclassConversionMixin):
-    level: str = field(default=default_logging_config['root']['level'])
+    level: str = field(default=DEFAULT_LOGGING_CONFIG['root']['level'])
 
 
 @dataclass(kw_only=True)
@@ -82,7 +83,7 @@ class Application:
 
     @staticmethod
     def _configure_logging(config: LoggingConfig) -> None:
-        logging_config = deepcopy(default_logging_config)
+        logging_config = deepcopy(DEFAULT_LOGGING_CONFIG)
         logging_config['root']['level'] = config.level
         logging_config['disable_existing_loggers'] = False
         logging.config.dictConfig(logging_config)

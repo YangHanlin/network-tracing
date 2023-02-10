@@ -10,3 +10,7 @@ def configure_subparsers(subparsers: _SubParsersAction):
         metavar='OPTIONS',
         action='append',
         help='options of the task being created, in the format KEY=VALUE')
+
+
+def run(options: dict) -> None:
+    pass

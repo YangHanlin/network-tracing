@@ -24,3 +24,7 @@ def configure_subparsers(subparsers: _SubParsersAction):
     parser.add_argument('id',
                         metavar='ID',
                         help='ID of tracing task to view events')
+
+
+def run(options: dict) -> None:
+    pass

@@ -1,4 +1,4 @@
-from dataclasses import is_dataclass, asdict
+from dataclasses import fields, is_dataclass, asdict
 import json
 from typing import Any
 
@@ -8,7 +8,13 @@ class DataclassConversionMixin:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]):
-        return cls(**data)
+        field_names = set(map(lambda f: f.name, fields(cls)))
+        filtered_data = {
+            key: value
+            for key, value in data.items() if key in field_names
+        }
+
+        return cls(**filtered_data)
 
     def to_dict(self) -> dict[str, Any]:
         if is_dataclass(self):

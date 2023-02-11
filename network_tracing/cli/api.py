@@ -121,7 +121,25 @@ class ApiClient:
 
         def __init__(self) -> None:
             super().__init__()
-            self.base_url: Optional[str] = None
+            self._base_url: Optional[str] = None
+
+        @property
+        def base_url(self):
+            return self._base_url
+
+        @base_url.setter
+        def base_url(self, base_url: Optional[str]):
+            # Add http:// to base_url if no scheme is found
+            for _ in range(1):
+                if base_url is None:
+                    break
+                if len(base_url) < 7:
+                    break
+                if base_url.lower()[:7] in ('https:/', 'http://'):
+                    break
+                base_url = 'http://' + base_url
+
+            self._base_url = base_url
 
         def request(self, method: str, url: str, *args, **kwargs):
             if self.base_url is not None:

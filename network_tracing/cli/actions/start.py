@@ -142,7 +142,7 @@ def configure_subparsers(subparsers: _SubParsersAction):
         help='options of the task being created, in the format KEY=VALUE')
 
 
-def run(options: Union[dict[str, Any], Options]) -> None:
+def run(options: Union[dict[str, Any], Options]):
     if isinstance(options, dict):
         options = Options.from_dict(options)
 
@@ -156,3 +156,4 @@ def run(options: Union[dict[str, Any], Options]) -> None:
             e,
         ),
               file=sys.stderr)
+        return 1

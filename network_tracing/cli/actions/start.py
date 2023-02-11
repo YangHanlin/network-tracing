@@ -5,7 +5,7 @@ from argparse import ArgumentParser, _SubParsersAction
 from dataclasses import dataclass, field
 from typing import Any, Union
 
-from network_tracing.cli.api import ApiClient, ApiException
+from network_tracing.cli.api import ApiClient
 from network_tracing.cli.constants import DEFAULT_PROGRAM_NAME
 from network_tracing.cli.models import BaseOptions
 from network_tracing.common.models import CreateTracingTaskRequest
@@ -150,7 +150,7 @@ def run(options: Union[dict[str, Any], Options]) -> None:
         request = options.to_request()
         response = ApiClient.get_instance().create_tracing_task(request)
         print(response.id)
-    except ApiException as e:
+    except Exception as e:
         print('{}: error: failed to create and start tracing task: {}'.format(
             DEFAULT_PROGRAM_NAME,
             e,

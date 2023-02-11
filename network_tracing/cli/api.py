@@ -9,7 +9,7 @@ from network_tracing.cli.constants import DEFAULT_BASE_URL
 from network_tracing.common.models import (
     CreateTracingTaskRequest, CreateTracingTaskResponse, DaemonInfoResponse,
     ErrorResponse, GetTracingEventsResponse, GetTracingTaskResponse,
-    ListTracingTasksResponse, TracingTaskResponse)
+    ListTracingTasksResponse, TracingEvent, TracingTaskResponse)
 from network_tracing.common.utilities import Metadata
 
 logger = logging.getLogger(__name__)
@@ -45,13 +45,34 @@ class ApiClient:
             lambda: self.get_tracing_task_raw(id))
         return GetTracingTaskResponse.from_dict(response.json())
 
-    def get_tracing_task_events_raw(self, id: str):
-        # TODO:
-        return self.http.get('/tracing_tasks/{}/events'.format(quote(id)))
+    def get_tracing_events_raw(self, task_id: str):
+        response = self.http.get('/tracing_tasks/{}/events'.format(
+            quote(task_id)),
+                                 stream=True)
 
-    def get_tracing_task_events(self, id: str) -> GetTracingEventsResponse:
-        # TODO:
-        return []
+        if response.encoding is None:
+            response.encoding = 'utf-8'
+
+        return response
+
+    def get_tracing_events(self, task_id: str) -> GetTracingEventsResponse:
+        response = self._call_and_check_response(
+            lambda: self.get_tracing_events_raw(task_id))
+
+        def generate():
+            for line in response.iter_lines():
+                try:
+                    yield TracingEvent.from_json(line)
+                except Exception as e:
+                    logger.warn(
+                        'Dropped an event because an error ocurred while parsing it (maybe malformed)'
+                    )
+                    logger.debug('Event (before parsing): %s', line)
+                    logger.debug(
+                        'Exception encountered while parsing the event:',
+                        exc_info=e)
+
+        return generate()
 
     def create_tracing_task_raw(self, payload: CreateTracingTaskRequest):
         return self.http.post('/tracing_tasks', json=payload.to_dict())

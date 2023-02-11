@@ -142,8 +142,9 @@ def configure_subparsers(subparsers: _SubParsersAction):
         help='options of the task being created, in the format KEY=VALUE')
 
 
-def run(options_dict: dict) -> None:
-    options = Options.from_dict(options_dict)
+def run(options: Union[dict[str, Any], Options]) -> None:
+    if isinstance(options, dict):
+        options = Options.from_dict(options)
 
     try:
         request = options.to_request()

@@ -1,6 +1,7 @@
 import sys
 from argparse import ArgumentParser, _SubParsersAction
 from dataclasses import dataclass
+from typing import Any, Union
 
 from network_tracing.cli.api import ApiClient, ApiException
 from network_tracing.cli.constants import DEFAULT_PROGRAM_NAME
@@ -19,8 +20,9 @@ def configure_subparsers(subparsers: _SubParsersAction):
     parser.add_argument('id', metavar='ID', help='ID of tracing task to view')
 
 
-def run(options_dict: dict):
-    options = Options.from_dict(options_dict)
+def run(options: Union[dict[str, Any], Options]):
+    if isinstance(options, dict):
+        options = Options.from_dict(options)
 
     try:
         tracing_task = ApiClient.get_instance().get_tracing_task(options.id)

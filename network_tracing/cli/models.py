@@ -6,7 +6,7 @@ from network_tracing.cli.constants import (DEFAULT_BASE_URL,
 from network_tracing.common.utilities import DataclassConversionMixin
 
 
-@dataclass
+@dataclass(kw_only=True)
 class BaseOptions(DataclassConversionMixin):
     subcommand: str
     config: str = field(default=DEFAULT_CONFIG_FILE_PATH)

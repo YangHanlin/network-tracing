@@ -47,9 +47,9 @@ class ApplicationConfig(DataclassConversionMixin):
 class Application:
 
     def __new__(cls: type['Application'], *args, **kwargs) -> 'Application':
+        # FIXME: It is not elegant to implement singleton by tweaking `__new__`
         if global_state.application is None:
             instance = super(Application, cls).__new__(cls)
-            instance.__init__(*args, **kwargs)
             global_state.application = instance
         return cast(Application, global_state.application)
 

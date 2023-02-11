@@ -37,6 +37,10 @@ class TracingTaskResponse(DataclassConversionMixin):
     id: str
     options: TracingTaskOptions
 
+    def __post_init__(self):
+        if isinstance(self.options, dict):
+            self.options = TracingTaskOptions.from_dict(self.options)
+
 
 @dataclass
 class IdResponse(DataclassConversionMixin):

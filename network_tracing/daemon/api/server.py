@@ -1,7 +1,6 @@
 import logging
 from dataclasses import dataclass, field
 from threading import Lock, Thread
-from typing import Optional
 
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
@@ -9,6 +8,7 @@ from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 from werkzeug.serving import make_server
 
+from network_tracing.common.models import ErrorResponse
 from network_tracing.common.utilities import DataclassConversionMixin
 from network_tracing.daemon.api.views import blueprints
 from network_tracing.daemon.models import BackgroundTask
@@ -21,11 +21,6 @@ class ApiServerConfig(DataclassConversionMixin):
     host: str = field(default='0.0.0.0')
     port: int = field(default=10032)
     cors: bool = field(default=False)
-
-
-@dataclass
-class _GeneralErrorResponse(DataclassConversionMixin):
-    message: Optional[str] = field(default=None)
 
 
 class _ServerThread(Thread):
@@ -118,7 +113,7 @@ class ApiServer(BackgroundTask):
     def _http_exception_handler(exception: HTTPException):
         logger.debug('Encountered an HTTPException', exc_info=exception)
         response = exception.get_response()
-        response.data = _GeneralErrorResponse(  # type: ignore
+        response.data = ErrorResponse(  # type: ignore
             message=exception.description).to_json()
         response.content_type = 'application/json; encoding=utf-8'
         return response

@@ -1,16 +1,18 @@
 import json
 import logging
 import logging.config
+import sys
 from argparse import ArgumentParser, Namespace
 from copy import deepcopy
 from typing import Any, Union
 
 from network_tracing.cli import actions
-from network_tracing.cli.actions.version import AllVersionsAction
+from network_tracing.cli.api import ApiClient
 from network_tracing.cli.constants import (DEFAULT_BASE_URL,
                                            DEFAULT_CONFIG_FILE_PATH,
                                            DEFAULT_LOGGING_CONFIG,
-                                           DEFAULT_LOGGING_LEVEL)
+                                           DEFAULT_LOGGING_LEVEL,
+                                           DEFAULT_PROGRAM_NAME)
 from network_tracing.cli.models import BaseOptions
 
 logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
@@ -23,7 +25,7 @@ def main():
 
 
 def create_parser() -> ArgumentParser:
-    parser = ArgumentParser()
+    parser = ArgumentParser(prog=DEFAULT_PROGRAM_NAME)
 
     _configure_base_options(parser)
     _configure_subparsers(parser)
@@ -34,8 +36,16 @@ def create_parser() -> ArgumentParser:
 def build_options_dict(args: Namespace) -> dict[str, Any]:
     commandline_options = vars(args)
 
-    if 'config' not in commandline_options or commandline_options[
-            'config'] is None:
+    if commandline_options.get('version', None):
+        commandline_options['subcommand'] = 'version'
+
+    if commandline_options.get('subcommand', None) is None:
+        print('{}: error: missing subcommand; use -h option for help'.format(
+            DEFAULT_PROGRAM_NAME),
+              file=sys.stderr)
+        sys.exit(1)
+
+    if commandline_options.get('config', None) is None:
         commandline_options['config'] = DEFAULT_CONFIG_FILE_PATH
     config_file_path = commandline_options['config']
 
@@ -62,12 +72,15 @@ def run(options: Union[dict[str, Any], BaseOptions]) -> None:
         options_dict = options.to_dict()
 
     _configure_logging(options.logging_level)
+    _configure_api(options.base_url)
     _dispatch_subcommand(options.subcommand, options_dict)
 
 
 def _configure_base_options(parser: ArgumentParser) -> None:
-    parser.register('action', 'all_versions', AllVersionsAction)
-    parser.add_argument('-V', '--version', action='all_versions')
+    parser.add_argument('-V',
+                        '--version',
+                        action='store_true',
+                        help='show version numbers and exit')
 
     parser.add_argument(
         '-c',
@@ -101,7 +114,7 @@ def _configure_subparsers(parser: ArgumentParser) -> None:
     subparsers = parser.add_subparsers(metavar='SUBCOMMAND',
                                        help='specify subcommand to execute',
                                        dest='subcommand',
-                                       required=True)
+                                       required=False)
 
     for configure in actions.subparsers_configurers:
         configure(subparsers)
@@ -112,6 +125,10 @@ def _configure_logging(logging_level: str) -> None:
     logging_config['root']['level'] = logging_level
     logging_config['disable_existing_loggers'] = False
     logging.config.dictConfig(logging_config)
+
+
+def _configure_api(base_url: str) -> None:
+    ApiClient.initialize(base_url=base_url)
 
 
 def _dispatch_subcommand(subcommand: str, payload: Any) -> None:

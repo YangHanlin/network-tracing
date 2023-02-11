@@ -1,23 +1,25 @@
-from argparse import SUPPRESS, Action
+from network_tracing.cli.api import ApiClient, ApiException
+from network_tracing.common.utilities import Metadata
 
 
-def _show_versions():
-    print('Not implemented yet')
+def run(*_):
+    print('CLI: {}'.format(_get_cli_version()))
+    print('Daemon: {}'.format(_get_daemon_version()))
 
 
-class AllVersionsAction(Action):
+def _get_cli_version() -> str:
+    return '{} cli {}'.format(*Metadata.get_package_name_and_version())
 
-    def __init__(self,
-                 option_strings,
-                 dest=SUPPRESS,
-                 default=SUPPRESS,
-                 help='show version numbers and exit'):
-        super(AllVersionsAction, self).__init__(option_strings=option_strings,
-                                                dest=dest,
-                                                default=default,
-                                                nargs=0,
-                                                help=help)
 
-    def __call__(self, parser, namespace, values, option_string=None) -> None:
-        _show_versions()
-        parser.exit()
+def _get_daemon_version() -> str:
+    api = ApiClient.get_instance()
+    try:
+        daemon_info = api.get_daemon_info()
+        daemon_version = '{} {}'.format(daemon_info.name, daemon_info.version)
+    except ApiException as e:
+        if e.parsed_response is None:
+            daemon_version = '<failed to retrieve>'
+        else:
+            daemon_version = '<failed to retrieve: {}>'.format(
+                e.parsed_response.message)
+    return '{} (using API at {})'.format(daemon_version, api.http.base_url)

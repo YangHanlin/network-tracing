@@ -1,7 +1,7 @@
 from argparse import _SubParsersAction
-from typing import Callable, Any
+from typing import Any, Callable
 
-from . import events, ls, start, stop, view
+from . import events, ls, start, stop, version, view
 
 SubparsersConfigurer = Callable[[_SubParsersAction], Any]
 SubcommandHandler = Callable[[Any], Any]
@@ -23,5 +23,6 @@ subcommand_handlers = {
     'stop': stop.run,
     'rm': stop.run,
     'remove': stop.run,
+    'version': version.run,
     'view': view.run,
 }

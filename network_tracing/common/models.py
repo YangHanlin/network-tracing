@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
 
 from network_tracing.common.utilities import DataclassConversionMixin
 
@@ -28,6 +28,11 @@ class TracingTaskOptions(DataclassConversionMixin):
 
 
 @dataclass
+class ErrorResponse(DataclassConversionMixin):
+    message: Optional[str] = field(default=None)
+
+
+@dataclass
 class TracingTaskResponse(DataclassConversionMixin):
     id: str
     options: TracingTaskOptions
@@ -52,4 +57,4 @@ GetTracingTaskResponse = TracingTaskResponse
 
 CreateTracingTaskResponse = IdResponse
 
-ListTracingEventsResponse = Iterable[TracingEvent]
+GetTracingEventsResponse = Iterable[TracingEvent]

@@ -78,7 +78,7 @@ def get_tracing_task(id: str):
 
 
 @tracing_tasks.get('/<id>/events')
-def get_tracing_task_events(id: str):
+def get_tracing_events(id: str):
     _, task = find_tracing_task(id)
     event_poller = task.get_event_poller()
 

@@ -1,7 +1,9 @@
 import os.path
+import sys
 
 DEFAULT_CONFIG_FILE_PATH = os.path.normpath(
     os.path.expanduser('~/.config/network_tracing/ntctl_config.json'))
+DEFAULT_PROGRAM_NAME = os.path.split(sys.argv[0])[-1]
 DEFAULT_BASE_URL = 'http://localhost:10032'
 DEFAULT_LOGGING_LEVEL = 'INFO'
 DEFAULT_LOGGING_CONFIG = {

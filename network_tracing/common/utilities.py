@@ -9,13 +9,15 @@ class DataclassConversionMixin:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]):
-        field_names = set(map(lambda f: f.name, fields(cls)))
-        filtered_data = {
-            key: value
-            for key, value in data.items() if key in field_names
-        }
+        if is_dataclass(cls):
+            field_names = set(map(lambda f: f.name, fields(cls)))
+            filtered_data = {
+                key: value
+                for key, value in data.items() if key in field_names
+            }
+            data = filtered_data
 
-        return cls(**filtered_data)
+        return cls(**data)
 
     def to_dict(self) -> dict[str, Any]:
         if is_dataclass(self):

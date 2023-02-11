@@ -9,7 +9,7 @@ from network_tracing.common.models import (CreateTracingTaskRequest,
                                            ListTracingTasksResponse,
                                            TracingTaskOptions,
                                            TracingTaskResponse)
-from network_tracing.daemon.api.common import ApiException
+from network_tracing.daemon.api.exceptions import ApiException
 from network_tracing.daemon.tracing.task import TracingTask
 from network_tracing.daemon.utilities import global_state
 

@@ -10,6 +10,7 @@ from werkzeug.serving import make_server
 
 from network_tracing.common.models import ErrorResponse
 from network_tracing.common.utilities import DataclassConversionMixin
+from network_tracing.daemon.api.constants import DEFAULT_HOST, DEFAULT_PORT
 from network_tracing.daemon.api.views import blueprints
 from network_tracing.daemon.models import BackgroundTask
 
@@ -18,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ApiServerConfig(DataclassConversionMixin):
-    host: str = field(default='0.0.0.0')
-    port: int = field(default=10032)
+    host: str = field(default=DEFAULT_HOST)
+    port: int = field(default=DEFAULT_PORT)
     cors: bool = field(default=False)
 
 

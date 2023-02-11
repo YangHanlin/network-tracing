@@ -1,0 +1,5 @@
+from network_tracing.common.constants import \
+    DEFAULT_API_SERVER_PORT as _DEFAULT_API_SERVER_PORT
+
+DEFAULT_HOST = '0.0.0.0'
+DEFAULT_PORT = _DEFAULT_API_SERVER_PORT

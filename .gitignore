@@ -262,4 +262,4 @@ tags
 
 ### Project specific ###
 /*venv/
-config.json
+/config*.json

@@ -21,7 +21,8 @@ logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
 def main():
     args = create_parser().parse_args()
     options_dict = build_options_dict(args)
-    run(options_dict)
+    exit_code = run(options_dict)
+    sys.exit(exit_code)
 
 
 def create_parser() -> ArgumentParser:
@@ -64,7 +65,7 @@ def build_options_dict(args: Namespace) -> dict[str, Any]:
     return options
 
 
-def run(options: Union[dict[str, Any], BaseOptions]) -> None:
+def run(options: Union[dict[str, Any], BaseOptions]) -> int:
     if isinstance(options, dict):
         options_dict = options
         options = BaseOptions.from_dict(options)
@@ -73,7 +74,12 @@ def run(options: Union[dict[str, Any], BaseOptions]) -> None:
 
     _configure_logging(options.logging_level)
     _configure_api(options.base_url)
-    _dispatch_subcommand(options.subcommand, options_dict)
+
+    result = _dispatch_subcommand(options.subcommand, options_dict)
+    if isinstance(result, int):
+        return result
+    else:
+        return 0
 
 
 def _configure_base_options(parser: ArgumentParser) -> None:
@@ -132,7 +138,7 @@ def _configure_api(base_url: str) -> None:
 
 
 def _dispatch_subcommand(subcommand: str, payload: Any) -> None:
-    actions.subcommand_handlers[subcommand](payload)
+    return actions.subcommand_handlers[subcommand](payload)
 
 
 if __name__ == '__main__':

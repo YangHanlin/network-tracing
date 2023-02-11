@@ -165,11 +165,13 @@ class ApiException(Exception):
 
     @staticmethod
     def _parse_response(raw_response: requests.Response):
+        if raw_response is None:
+            return None
+
         try:
-            parsed_response = ErrorResponse.from_dict(raw_response.json())
+            return ErrorResponse.from_dict(raw_response.json())
         except Exception as e:
             logger.debug(
                 'Encountered an exception while parsing error response:',
                 exc_info=e)
-            parsed_response = None
-        return parsed_response
+            return None

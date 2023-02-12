@@ -33,6 +33,7 @@ struct ktime_info {
 };
 
 struct data_t {
+    u64 ktime;
     unsigned __int128 saddr;
     unsigned __int128 daddr;
     u64 total_time;
@@ -185,6 +186,7 @@ int on_dev_hard_start_xmit(struct pt_regs *ctx, struct sk_buff *skb){
     bpf_trace_printk("ip_time: %ld", tinfo->ip_time);
     bpf_trace_printk("tcp_time: %ld", tinfo->tcp_time);
 
+    data.ktime = bpf_ktime_get_ns();
     data.total_time = tinfo->qdisc_time - tinfo->tcp_time;
     data.qdisc_timestamp = tinfo->qdisc_time;
     data.qdisc_time = tinfo->qdisc_time - tinfo->mac_time;

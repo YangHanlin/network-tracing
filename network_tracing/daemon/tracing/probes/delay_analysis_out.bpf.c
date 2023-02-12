@@ -33,6 +33,7 @@ struct ktime_info {
 };
 
 struct data_t {
+    u64 ktime;
     u64 total_time;
     u64 qdisc_timestamp;
     u64 qdisc_time;
@@ -178,6 +179,7 @@ int on_dev_hard_start_xmit(struct pt_regs *ctx, struct sk_buff *skb){
     sport = tcp->source;
     tinfo->qdisc_time = bpf_ktime_get_ns();
     struct data_t data = {};
+    data.ktime = bpf_ktime_get_ns();
     data.total_time = tinfo->qdisc_time - tinfo->tcp_time;
     data.qdisc_timestamp = tinfo->qdisc_time;
     data.qdisc_time = tinfo->qdisc_time - tinfo->mac_time;

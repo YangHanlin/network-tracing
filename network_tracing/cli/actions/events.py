@@ -77,8 +77,9 @@ class _UploadAction(_BaseAction):
             self._write_api.write(bucket='network_subsystem', record=point)
 
     def _format_delay_analysis_out(self, event: TracingEvent):
+        # The following type checking error '"int" is incompatible with "Integral"' seems a false positive
         return Point('delay_analysis_out') \
-            .time(event.time) \
+            .time(event.timestamp) \
             .field('SADDR', event.event['parsed']['saddr']) \
             .field('SPORT', event.event['parsed']['sport']) \
             .field('DADDR', event.event['parsed']['daddr']) \
@@ -92,7 +93,7 @@ class _UploadAction(_BaseAction):
 
     def _format_delay_analysis_out_v6(self, event: TracingEvent):
         return Point('delay_analysis_out_v6') \
-            .time(event.time) \
+            .time(event.timestamp) \
             .field('SADDR', event.event['parsed']['saddr']) \
             .field('SPORT', event.event['parsed']['sport']) \
             .field('DADDR', event.event['parsed']['daddr']) \

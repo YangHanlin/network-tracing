@@ -29,6 +29,7 @@ struct ktime_info {
 };
 
 struct data_t {
+    u64 ktime;
     u64 total_time;
     u64 mac_timestamp;
     u64 mac_time;
@@ -156,6 +157,7 @@ int on_skb_copy_datagram_iter(struct pt_regs *ctx, struct sk_buff *skb){
 
     tinfo->app_time = bpf_ktime_get_ns();
     struct data_t data = {};
+    data.ktime = bpf_ktime_get_ns();
     data.mac_timestamp = tinfo->mac_time;
     data.total_time = tinfo->app_time - tinfo->mac_time;
     data.mac_time = tinfo->ip_time - tinfo->mac_time;

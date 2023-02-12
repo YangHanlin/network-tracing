@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Iterable, Optional, Protocol
+from time import CLOCK_MONOTONIC, CLOCK_REALTIME, clock_gettime_ns
+from typing import Iterable, NoReturn, Optional, Protocol
 
 from network_tracing.daemon.models import BackgroundTask
 
@@ -42,6 +43,33 @@ class KernelSymbol:
             if symbol.symbol_name == symbol_name:
                 return symbol
         return None
+
+
+class Ktime:
+    _offset: Optional[int] = None
+
+    @staticmethod
+    def get_offset(use_cache: bool = True) -> int:
+        """Get the offset between timestamps of types `CLOCK_REALTIME` and `CLOCK_MONOTONIC` in ns."""
+
+        if not use_cache or Ktime._offset is None:
+            offset = -1
+            best_delta = -1
+            for _ in range(10):
+                t1 = clock_gettime_ns(CLOCK_REALTIME)
+                t2 = clock_gettime_ns(CLOCK_MONOTONIC)
+                t3 = clock_gettime_ns(CLOCK_REALTIME)
+                delta = t3 - t1
+                ts = (t1 + t3) // 2
+                if best_delta == -1 or delta < best_delta:
+                    best_delta = delta
+                    offset = ts - t2
+            Ktime._offset = offset
+
+        return Ktime._offset
+
+    def __new__(cls: type['Ktime']) -> NoReturn:
+        raise Exception('No instantiation for this class')
 
 
 class _Application(Protocol):

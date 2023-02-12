@@ -1,11 +1,12 @@
 from collections import deque
 from datetime import datetime
 from queue import Queue
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Protocol, runtime_checkable
 
 from network_tracing.common.models import TracingEvent, TracingTaskOptions
 from network_tracing.daemon.models import BackgroundTask
 from network_tracing.daemon.tracing.probes import probe_factories
+from network_tracing.daemon.utilities import Ktime
 
 
 class TracingEventPoller:
@@ -28,6 +29,14 @@ class TracingEventPoller:
 
     def __exit__(self, type, value, traceback):
         return self.close()
+
+
+@runtime_checkable
+class KtimeAvailable(Protocol):
+
+    def __ktime__(self) -> int:
+        """Return the value provided by `bpf_get_ktime_ns()`."""
+        raise NotImplementedError
 
 
 class TracingTask(BackgroundTask):
@@ -87,9 +96,16 @@ class TracingTask(BackgroundTask):
     def _build_event_callback(self, probe_type: str) -> Callable[[Any], Any]:
 
         def event_callback(event: Any):
-            wrapped_event = TracingEvent(timestamp=datetime.now().timestamp(),
+            # Prefer timestamp passed from kernel space
+            if isinstance(event, KtimeAvailable):
+                timestamp = Ktime.get_offset() + event.__ktime__()
+            else:
+                timestamp = int(datetime.now().timestamp() * 1e9)
+
+            wrapped_event = TracingEvent(timestamp=timestamp,
                                          probe=probe_type,
                                          event=event)
+
             self._event_buffer.append(wrapped_event)
             for queue in self._event_queues:
                 queue.put(wrapped_event)

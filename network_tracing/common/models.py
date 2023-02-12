@@ -7,13 +7,16 @@ from network_tracing.common.utilities import DataclassConversionMixin
 
 @dataclass
 class TracingEvent(DataclassConversionMixin):
-    timestamp: float
+    timestamp: int
+    """Nanoseconds from the UNIX epoch."""
+
     probe: str
     event: Any
 
     @property
     def time(self) -> datetime:
-        return datetime.fromtimestamp(self.timestamp).astimezone()
+        # Timestamps accepted by `datetime` are in seconds
+        return datetime.fromtimestamp(self.timestamp / 1e9).astimezone()
 
 
 @dataclass

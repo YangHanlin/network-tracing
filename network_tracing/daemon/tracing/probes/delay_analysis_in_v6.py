@@ -32,6 +32,7 @@ class ProbeEvent(DataclassConversionMixin):
 
     @dataclass
     class RawProbeEvent(DataclassConversionMixin):
+        ktime: int
         saddr: int
         sport: int
         daddr: int
@@ -68,6 +69,9 @@ class ProbeEvent(DataclassConversionMixin):
         if isinstance(self.parsed, dict):
             self.parsed = ProbeEvent.ParsedProbeEvent.from_dict(
                 cast(dict[str, Any], self.parsed))
+
+    def __ktime__(self) -> int:
+        return self.raw.ktime
 
     @classmethod
     def from_raw_event(cls, raw_event: RawProbeEvent):
@@ -141,6 +145,7 @@ class Probe(BaseProbe):
     def _perf_buffer_callback(self, cpu, data, size):
         event_data = self._bpf[Probe._PERF_BUFFER_NAME].event(data)
         raw_event = ProbeEvent.RawProbeEvent(
+            ktime=event_data.ktime,
             saddr=event_data.saddr,
             sport=event_data.sport,
             daddr=event_data.daddr,

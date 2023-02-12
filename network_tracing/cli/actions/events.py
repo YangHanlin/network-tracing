@@ -2,7 +2,6 @@ import logging
 import sys
 from argparse import ArgumentParser, _SubParsersAction
 from dataclasses import dataclass, field
-from datetime import datetime
 from queue import Empty, Full, Queue
 from signal import SIGINT, SIGTERM, signal
 from threading import Thread
@@ -55,8 +54,7 @@ class _PrintAction(_BaseAction):
         print('{:26} {:20} {}'.format('TIME', 'PROBE', 'EVENT'))
 
     def handle_event(self, event: TracingEvent) -> None:
-        time = datetime.fromtimestamp(event.timestamp)
-        time_str = time.strftime('%Y-%m-%d %H:%M:%S,%f')
+        time_str = event.time.strftime('%Y-%m-%d %H:%M:%S,%f')
         print('{:26} {:20} {}'.format(time_str, event.probe, event.event))
 
 
@@ -80,7 +78,7 @@ class _UploadAction(_BaseAction):
 
     def _format_delay_analysis_out(self, event: TracingEvent):
         return Point('delay_analysis_out') \
-            .time(datetime.fromtimestamp(event.timestamp)) \
+            .time(event.time) \
             .field('SADDR', event.event['parsed']['saddr']) \
             .field('SPORT', event.event['parsed']['sport']) \
             .field('DADDR', event.event['parsed']['daddr']) \
@@ -94,7 +92,7 @@ class _UploadAction(_BaseAction):
 
     def _format_delay_analysis_out_v6(self, event: TracingEvent):
         return Point('delay_analysis_out_v6') \
-            .time(datetime.fromtimestamp(event.timestamp)) \
+            .time(event.time) \
             .field('SADDR', event.event['parsed']['saddr']) \
             .field('SPORT', event.event['parsed']['sport']) \
             .field('DADDR', event.event['parsed']['daddr']) \

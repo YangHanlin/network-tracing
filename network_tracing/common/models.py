@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Iterable, Optional
 
 from network_tracing.common.utilities import DataclassConversionMixin
@@ -9,6 +10,10 @@ class TracingEvent(DataclassConversionMixin):
     timestamp: float
     probe: str
     event: Any
+
+    @property
+    def time(self) -> datetime:
+        return datetime.fromtimestamp(self.timestamp).astimezone()
 
 
 @dataclass

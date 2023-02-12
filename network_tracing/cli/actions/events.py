@@ -3,10 +3,13 @@ import sys
 from argparse import ArgumentParser, _SubParsersAction
 from dataclasses import dataclass, field
 from datetime import datetime
-from queue import Empty, Queue
+from queue import Empty, Full, Queue
 from signal import SIGINT, SIGTERM, signal
 from threading import Thread
-from typing import Any, Union
+from typing import Any, Optional, Union
+
+from influxdb_client import InfluxDBClient, Point
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 from network_tracing.cli.api import ApiClient
 from network_tracing.cli.constants import DEFAULT_PROGRAM_NAME
@@ -15,10 +18,28 @@ from network_tracing.common.models import TracingEvent
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_EVENT_BUFFER_SIZE = 65536
+
+
+@dataclass(kw_only=True)
+class Options(BaseOptions):
+    id: str
+    actions: list = field(default_factory=list)
+    buffer_size: int
+    influxdb_config: Optional[str] = field(default=None)
+
+    def __post_init__(self):
+        if not self.actions:
+            self.actions = ['print']
+
+        for action in self.actions:
+            if action not in VALID_ACTIONS:
+                raise Exception('Invalid action \'{}\''.format(action))
+
 
 class _BaseAction:
 
-    def initialize(self) -> None:
+    def initialize(self, options: Options) -> None:
         pass
 
     def handle_event(self, event: TracingEvent) -> None:
@@ -30,7 +51,7 @@ class _BaseAction:
 
 class _PrintAction(_BaseAction):
 
-    def initialize(self) -> None:
+    def initialize(self, options: Options) -> None:
         print('{:26} {:20} {}'.format('TIME', 'PROBE', 'EVENT'))
 
     def handle_event(self, event: TracingEvent) -> None:
@@ -39,10 +60,67 @@ class _PrintAction(_BaseAction):
         print('{:26} {:20} {}'.format(time_str, event.probe, event.event))
 
 
+# TODO: Generalize
 class _UploadAction(_BaseAction):
 
-    def initialize(self) -> None:
-        logger.warn('Action `upload` has not been implemented yet')
+    def initialize(self, options: Options) -> None:
+        self._influxdb_client = _UploadAction._build_influxdb_client(
+            options.influxdb_config)
+        self._write_api = self._influxdb_client.write_api(SYNCHRONOUS)
+
+    def handle_event(self, event: TracingEvent) -> None:
+        formatter = _UploadAction._event_formatters.get(event.probe)
+        if formatter is None:
+            logger.warn('Cannot recognize probe type \'%s\'; ignoring',
+                        event.probe)
+        else:
+            point = formatter(self, event)
+            logger.debug('Uploading record %s', point)
+            self._write_api.write(bucket='network_subsystem', record=point)
+
+    def _format_delay_analysis_out(self, event: TracingEvent):
+        return Point('delay_analysis_out') \
+            .time(datetime.fromtimestamp(event.timestamp)) \
+            .field('SADDR', event.event['parsed']['saddr']) \
+            .field('SPORT', event.event['parsed']['sport']) \
+            .field('DADDR', event.event['parsed']['daddr']) \
+            .field('DPORT', event.event['parsed']['dport']) \
+            .field('SEQ', event.event['parsed']['seq']) \
+            .field('ACK', event.event['parsed']['ack']) \
+            .field('TIME_TOTAL', event.event['parsed']['total_time']) \
+            .field('TIME_QDisc', event.event['parsed']['qdisc_time']) \
+            .field('TIME_IP', event.event['parsed']['ip_time']) \
+            .field('TIME_TCP', event.event['parsed']['tcp_time'])
+
+    def _format_delay_analysis_out_v6(self, event: TracingEvent):
+        return Point('delay_analysis_out_v6') \
+            .time(datetime.fromtimestamp(event.timestamp)) \
+            .field('SADDR', event.event['parsed']['saddr']) \
+            .field('SPORT', event.event['parsed']['sport']) \
+            .field('DADDR', event.event['parsed']['daddr']) \
+            .field('DPORT', event.event['parsed']['dport']) \
+            .field('SEQ', event.event['parsed']['seq']) \
+            .field('ACK', event.event['parsed']['ack']) \
+            .field('TIME_TOTAL', event.event['parsed']['total_time']) \
+            .field('TIME_QDisc', event.event['parsed']['qdisc_time']) \
+            .field('TIME_IP', event.event['parsed']['ip_time']) \
+            .field('TIME_TCP', event.event['parsed']['tcp_time'])
+
+    _event_formatters = {
+        'delay_analysis_out': _format_delay_analysis_out,
+        'delay_analysis_out_v6': _format_delay_analysis_out_v6,
+    }
+
+    @staticmethod
+    def _build_influxdb_client(
+            influxdb_config_path: Optional[str]) -> InfluxDBClient:
+        if influxdb_config_path is None:
+            default_org = '-'  # to be compatible with InfluxDB 1.8
+            return InfluxDBClient('http://localhost:8086', org=default_org)
+        elif influxdb_config_path == ':env:':
+            return InfluxDBClient.from_env_properties()
+        else:
+            return InfluxDBClient.from_config_file(influxdb_config_path)
 
 
 _action_classes: dict[str, type[_BaseAction]] = {
@@ -51,20 +129,6 @@ _action_classes: dict[str, type[_BaseAction]] = {
 }
 
 VALID_ACTIONS = _action_classes.keys()
-
-
-@dataclass
-class Options(BaseOptions):
-    id: str
-    actions: list = field(default_factory=list)
-
-    def __post_init__(self):
-        if not self.actions:
-            self.actions = ['print']
-
-        for action in self.actions:
-            if action not in VALID_ACTIONS:
-                raise Exception('Invalid action \'{}\''.format(action))
 
 
 def configure_subparsers(subparsers: _SubParsersAction):
@@ -85,6 +149,25 @@ def configure_subparsers(subparsers: _SubParsersAction):
         'specified more than once to perform multiple actions, and if not '
         'specified, defaults to \'print\'.'.format(', '.join(VALID_ACTIONS)))
 
+    parser.add_argument('-u',
+                        '--buffer-size',
+                        metavar='N',
+                        type=int,
+                        default=DEFAULT_EVENT_BUFFER_SIZE,
+                        help='size of event buffer; defaults to {}'.format(
+                            DEFAULT_EVENT_BUFFER_SIZE))
+
+    parser.add_argument(
+        '-i',
+        '--influxdb-config',
+        metavar='PATH',
+        help=
+        'path to configuration file of InfluxDB Client, or use `:env:` to load '
+        'config from environment variables. If not specified, a default client '
+        'connecting to http://localhost:8086 will be created. See also '
+        'https://influxdb-client.readthedocs.io/en/stable/api.html#influxdb_client.InfluxDBClient.from_config_file.'
+    )
+
     parser.add_argument('id',
                         metavar='ID',
                         help='ID of tracing task to view events')
@@ -96,12 +179,21 @@ def run(options: Union[dict[str, Any], Options]):
             options = Options.from_dict(options)
 
         events = ApiClient.get_instance().get_tracing_events(options.id)
-        queue: Queue[TracingEvent] = Queue()
+        event_buffer: Queue[TracingEvent] = Queue(maxsize=options.buffer_size)
 
         def poll_event():
+            dropped = 0
             while True:
                 for event in events:
-                    queue.put(event)
+                    try:
+                        event_buffer.put_nowait(event)
+                        if dropped:
+                            logger.warn(
+                                'Dropped %d event(s) as the buffer is full',
+                                dropped)
+                            dropped = 0
+                    except Full:
+                        dropped += 1
 
         thread = Thread(target=poll_event, daemon=True)
         thread.start()
@@ -120,11 +212,11 @@ def run(options: Union[dict[str, Any], Options]):
         ]
 
         for action in actions:
-            action.initialize()
+            action.initialize(options)
 
         while running[0]:
             try:
-                event = queue.get(block=True, timeout=0.5)
+                event = event_buffer.get(block=True, timeout=0.5)
                 for action in actions:
                     action.handle_event(event)
             except Empty:
@@ -139,4 +231,5 @@ def run(options: Union[dict[str, Any], Options]):
             e,
         ),
               file=sys.stderr)
+        logger.debug('Exception information:', exc_info=e)
         return 1

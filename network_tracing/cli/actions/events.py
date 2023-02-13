@@ -25,7 +25,7 @@ DEFAULT_EVENT_BUFFER_SIZE = 65536
 class Options(BaseOptions):
     id: str
     actions: list = field(default_factory=list)
-    buffer_size: int
+    buffer_size: int = field(default=DEFAULT_EVENT_BUFFER_SIZE)
     influxdb_config: Optional[str] = field(default=None)
 
     def __post_init__(self):
@@ -192,7 +192,6 @@ def configure_subparsers(subparsers: _SubParsersAction):
                         '--buffer-size',
                         metavar='N',
                         type=int,
-                        default=DEFAULT_EVENT_BUFFER_SIZE,
                         help='size of event buffer; defaults to {}'.format(
                             DEFAULT_EVENT_BUFFER_SIZE))
 

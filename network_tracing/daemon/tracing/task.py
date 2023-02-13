@@ -32,6 +32,13 @@ class TracingEventPoller:
 
 
 @runtime_checkable
+class TimestampAvailable(Protocol):
+
+    def __timestamp__(self) -> int:
+        """Return the timestamp as nanoseconds from the UNIX epoch."""
+        raise NotImplementedError
+
+@runtime_checkable
 class KtimeAvailable(Protocol):
 
     def __ktime__(self) -> int:
@@ -97,7 +104,9 @@ class TracingTask(BackgroundTask):
 
         def event_callback(event: Any):
             # Prefer timestamp passed from kernel space
-            if isinstance(event, KtimeAvailable):
+            if isinstance(event, TimestampAvailable):
+                timestamp = event.__timestamp__()
+            elif isinstance(event, KtimeAvailable):
                 timestamp = Ktime.get_offset() + event.__ktime__()
             else:
                 timestamp = int(datetime.now().timestamp() * 1e9)

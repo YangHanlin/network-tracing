@@ -1,11 +1,12 @@
 import logging
 import sys
 from argparse import ArgumentParser, _SubParsersAction
+from copy import deepcopy
 from dataclasses import dataclass, field
 from queue import Empty, Full, Queue
 from signal import SIGINT, SIGTERM, signal
 from threading import Thread
-from typing import Any, Optional, Union
+from typing import Any, Iterable, Optional, Union
 
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -72,9 +73,14 @@ class _UploadAction(_BaseAction):
             logger.warn('Cannot recognize probe type \'%s\'; ignoring',
                         event.probe)
         else:
-            point = formatter(self, event)
-            logger.debug('Uploading record %s', point)
-            self._write_api.write(bucket='network_subsystem', record=point)
+            point_or_points = formatter(self, event)
+            if not isinstance(point_or_points, Iterable):
+                points = [point_or_points]
+            else:
+                points = point_or_points
+            for point in points:
+                logger.debug('Uploading record %s', point)
+                self._write_api.write(bucket='network_subsystem', record=point)
 
     def _format_delay_analysis_out(self, event: TracingEvent):
         # The following type checking error '"int" is incompatible with "Integral"' seems a false positive
@@ -105,9 +111,43 @@ class _UploadAction(_BaseAction):
             .field('TIME_IP', event.event['parsed']['ip_time']) \
             .field('TIME_TCP', event.event['parsed']['tcp_time'])
 
+    def _format_retsnoop(self, event: TracingEvent):
+        timestamp = event.timestamp
+        data: dict[str, Any] = deepcopy(event.event)
+        data.pop('timestamp')
+        data['PID'] = data.pop('pid')
+        data['TID'] = data.pop('tid')
+        data['PNAME'] = data.pop('pname')
+        data['TNAME'] = data.pop('tname')
+        data.update(data.pop('functions'))
+
+        point = Point.from_dict({
+            'measurement': 'function_duration',
+            'time': timestamp,
+            'fields': data,
+        })
+
+        column_name = '{}:{}-{}:{}'.format(
+            data.pop('PID'),
+            data.pop('TID'),
+            data.pop('PNAME'),
+            data.pop('TNAME'),
+        )
+        point_bar = Point.from_dict({
+            'measurement': 'function_duration_bar',
+            'time': timestamp,
+            'tags': {
+                'column_name': column_name,
+            },
+            'fields': data,
+        })
+
+        return [point, point_bar]
+
     _event_formatters = {
         'delay_analysis_out': _format_delay_analysis_out,
         'delay_analysis_out_v6': _format_delay_analysis_out_v6,
+        'retsnoop': _format_retsnoop,
     }
 
     @staticmethod

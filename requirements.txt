@@ -1,8 +1,8 @@
-# Daemon dependencies
-bcc
-flask
-flask-cors
+# This file lists dependencies required for developing this project. For
+# runtime dependencies, please refer to `setup.py`.
 
-# CLI dependencies
-requests
-influxdb-client[ciso]
+yapf
+# https://github.com/pypa/setuptools/issues/3772
+setuptools<66.0
+wheel
+build

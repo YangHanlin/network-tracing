@@ -1,16 +1,4 @@
-from pathlib import Path
 from setuptools import find_packages, setup
-
-
-def get_requirements():
-    with open(Path(__file__).parent / 'requirements.txt',
-              'r',
-              encoding='utf-8') as f:
-
-        return list(
-            filter(lambda line: line and not line.startswith('#'),
-                   map(lambda line: line.strip(), f.readlines())))
-
 
 setup(
     name='network-tracing',
@@ -25,7 +13,16 @@ setup(
             'ntctl=network_tracing.cli.main:main',
         ],
     },
-    install_requires=get_requirements(),
+    install_requires=[
+        # Daemon dependencies
+        'bcc',  # this should be manually installed
+        'flask',
+        'flask-cors',
+
+        # CLI dependencies
+        'requests',
+        'influxdb-client[ciso]',
+    ],
     python_requires='>= 3.10',
     include_package_data=True,
 )

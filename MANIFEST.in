@@ -1,0 +1,3 @@
+# Resources needed for running probes
+include network_tracing/daemon/tracing/probes/*.bpf.c
+include network_tracing/daemon/tracing/probes/retsnoop

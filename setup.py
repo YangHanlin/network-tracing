@@ -1,5 +1,5 @@
 from pathlib import Path
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 def get_requirements():
@@ -15,7 +15,10 @@ def get_requirements():
 setup(
     name='network-tracing',
     version='0.1.0',
-    packages=['network_tracing'],
+    packages=find_packages(include=[
+        'network_tracing',
+        'network_tracing.*',
+    ]),
     entry_points={
         'console_scripts': [
             'ntd=network_tracing.daemon.main:main',
@@ -23,4 +26,6 @@ setup(
         ],
     },
     install_requires=get_requirements(),
+    python_requires='>= 3.10',
+    include_package_data=True,
 )

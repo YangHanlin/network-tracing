@@ -2,7 +2,6 @@ from setuptools import find_packages, setup
 
 setup(
     name='network-tracing',
-    version='0.1.0',
     packages=find_packages(include=[
         'network_tracing',
         'network_tracing.*',
@@ -23,6 +22,12 @@ setup(
         'requests',
         'influxdb-client[ciso]',
     ],
+    setup_requires=[
+        'setuptools-git-versioning<2',
+    ],
+    setuptools_git_versioning={
+        'enabled': True,
+    },
     python_requires='>= 3.10',
     include_package_data=True,
 )

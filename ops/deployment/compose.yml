@@ -1,0 +1,19 @@
+services:
+  ntd:
+    image: network_tracing:latest
+    volumes:
+      - /sys/kernel/debug:/sys/kernel/debug:rw
+      - /lib/modules:/lib/modules:ro
+      - /usr/src:/usr/src:ro
+    environment:
+      - "NTD_API_HOST=${NTD_API_HOST:-}"
+      - "NTD_API_PORT=${NTD_API_PORT:-}"
+      - "NTD_API_CORS=${NTD_API_CORS:-}"
+      - "NTD_LOGGING_LEVEL=${NTD_LOGGING_LEVEL:-}"
+      - "NTCTL_BASE_URL=${NTCTL_BASE_URL:-}"
+      - "NTCTL_LOGGING_LEVEL=${NTCTL_LOGGING_LEVEL:-}"
+      - "NTCTL_BUFFER_SIZE=${NTCTL_BUFFER_SIZE:-}"
+      - "NTCTL_INFLUXDB_CONFIG=${NTCTL_INFLUXDB_CONFIG:-}"
+    ports:
+      - "${NTD_API_PORT:-10032}:${NTD_API_PORT:-10032}"
+    privileged: true

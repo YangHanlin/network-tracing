@@ -1,0 +1,1053 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_INFLUXDB",
+      "label": "InfluxDB",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "8.1.3"
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1676467807704,
+  "links": [],
+  "panels": [
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Qdisc"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "dark-purple",
+                      "value": null
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ip"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 9
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tcp"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "dark-red",
+                      "value": 3
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 11,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last"
+          ],
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "pluginVersion": "8.1.3",
+      "targets": [
+        {
+          "alias": "Qdisc",
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "delay_analysis_out",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"TIME_QDisc\") FROM \"delay_analysis_out\" WHERE (\"SADDR\" =~ /^$SADDR$/ AND \"SPORT\" =$SPORT AND \"DADDR\" =~ /^$DADDR$/ AND \"DPORT\" =$DPORT) AND $timeFilter GROUP BY time(1s) fill(null)",
+          "rawQuery": true,
+          "refId": "QDisc",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "TIME_QDisc"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "SADDR",
+              "operator": "=~",
+              "value": "/^$SADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "SPORT",
+              "operator": "=~",
+              "value": "/^$SPORT$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DADDR",
+              "operator": "=~",
+              "value": "/^$DADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DPORT",
+              "operator": "=~",
+              "value": "/^$DPORT$/"
+            }
+          ]
+        },
+        {
+          "alias": "ip",
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "delay_analysis_out",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"TIME_IP\") FROM \"delay_analysis_out\" WHERE (\"SADDR\" =~ /^$SADDR$/ AND \"SPORT\" =$SPORT AND \"DADDR\" =~ /^$DADDR$/ AND \"DPORT\" =$DPORT) AND $timeFilter GROUP BY time(1s) fill(null)",
+          "rawQuery": true,
+          "refId": "ip",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "TIME_IP"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "SADDR",
+              "operator": "=~",
+              "value": "/^$SADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "SPORT",
+              "operator": "=~",
+              "value": "/^$SPORT$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DADDR",
+              "operator": "=~",
+              "value": "/^$DADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DPORT",
+              "operator": "=~",
+              "value": "/^$DPORT$/"
+            }
+          ]
+        },
+        {
+          "alias": "tcp",
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "delay_analysis_out",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"TIME_TCP\") FROM \"delay_analysis_out\" WHERE (\"SADDR\" =~ /^$SADDR$/ AND \"SPORT\" =$SPORT AND \"DADDR\" =~ /^$DADDR$/ AND \"DPORT\" =$DPORT) AND $timeFilter GROUP BY time(1s) fill(null)",
+          "rawQuery": true,
+          "refId": "tcp",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "TIME_TCP"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "SADDR",
+              "operator": "=~",
+              "value": "/^$SADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "SPORT",
+              "operator": "=~",
+              "value": "/^$SPORT$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DADDR",
+              "operator": "=~",
+              "value": "/^$DADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DPORT",
+              "operator": "=~",
+              "value": "/^$DPORT$/"
+            }
+          ]
+        },
+        {
+          "alias": "total",
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "delay_analysis_out",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"TIME_TOTAL\") FROM \"delay_analysis_out\" WHERE (\"SADDR\" =~ /^$SADDR$/ AND \"SPORT\" =$SPORT AND \"DADDR\" =~ /^$DADDR$/ AND \"DPORT\" =$DPORT) AND $timeFilter GROUP BY time(1s) fill(null)",
+          "rawQuery": true,
+          "refId": "total",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "TIME_TOTAL"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "SADDR",
+              "operator": "=~",
+              "value": "/^$SADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "SPORT",
+              "operator": "=~",
+              "value": "/^$SPORT$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DADDR",
+              "operator": "=~",
+              "value": "/^$DADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DPORT",
+              "operator": "=~",
+              "value": "/^$DPORT$/"
+            }
+          ]
+        }
+      ],
+      "title": "delay_analysis_out",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisLabel": "耗时/ms",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 25,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 10,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dtdurationms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Qdisc"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "super-light-purple",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 3
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ip"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "super-light-blue",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 9
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tcp"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "super-light-yellow",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 3
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "points"
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 11,
+        "x": 11,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "8.1.3",
+      "targets": [
+        {
+          "alias": "Qdisc",
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "delay_analysis_out",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"TIME_QDisc\") FROM \"delay_analysis_out\" WHERE (\"SADDR\" =~ /^$SADDR$/ AND \"SPORT\" =$SPORT AND \"DADDR\" =~ /^$DADDR$/ AND \"DPORT\" =$DPORT) AND $timeFilter GROUP BY time(1s) fill(null)",
+          "rawQuery": true,
+          "refId": "QDisc",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "TIME_QDisc"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "SADDR",
+              "operator": "=~",
+              "value": "/^$SADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "SPORT",
+              "operator": "=~",
+              "value": "/^$SPORT$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DADDR",
+              "operator": "=~",
+              "value": "/^$DADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DPORT",
+              "operator": "=~",
+              "value": "/^$DPORT$/"
+            }
+          ]
+        },
+        {
+          "alias": "ip",
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "delay_analysis_out",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"TIME_IP\") FROM \"delay_analysis_out\" WHERE (\"SADDR\" =~ /^$SADDR$/ AND \"SPORT\" =$SPORT AND \"DADDR\" =~ /^$DADDR$/ AND \"DPORT\" =$DPORT) AND $timeFilter GROUP BY time(1s) fill(null)",
+          "rawQuery": true,
+          "refId": "ip",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "TIME_IP"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "SADDR",
+              "operator": "=~",
+              "value": "/^$SADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "SPORT",
+              "operator": "=~",
+              "value": "/^$SPORT$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DADDR",
+              "operator": "=~",
+              "value": "/^$DADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DPORT",
+              "operator": "=~",
+              "value": "/^$DPORT$/"
+            }
+          ]
+        },
+        {
+          "alias": "tcp",
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "delay_analysis_out",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"TIME_TCP\") FROM \"delay_analysis_out\" WHERE (\"SADDR\" =~ /^$SADDR$/ AND \"SPORT\" =$SPORT AND \"DADDR\" =~ /^$DADDR$/ AND \"DPORT\" =$DPORT) AND $timeFilter GROUP BY time(1s) fill(null)",
+          "rawQuery": true,
+          "refId": "tcp",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "TIME_TCP"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "SADDR",
+              "operator": "=~",
+              "value": "/^$SADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "SPORT",
+              "operator": "=~",
+              "value": "/^$SPORT$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DADDR",
+              "operator": "=~",
+              "value": "/^$DADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DPORT",
+              "operator": "=~",
+              "value": "/^$DPORT$/"
+            }
+          ]
+        },
+        {
+          "alias": "total",
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": true,
+          "measurement": "delay_analysis_out",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"TIME_TOTAL\") FROM \"delay_analysis_out\" WHERE (\"SADDR\" =~ /^$SADDR$/ AND \"SPORT\" =$SPORT AND \"DADDR\" =~ /^$DADDR$/ AND \"DPORT\" =$DPORT) AND $timeFilter GROUP BY time(1s) fill(null)",
+          "rawQuery": true,
+          "refId": "total",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "TIME_TOTAL"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "SADDR",
+              "operator": "=~",
+              "value": "/^$SADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "SPORT",
+              "operator": "=~",
+              "value": "/^$SPORT$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DADDR",
+              "operator": "=~",
+              "value": "/^$DADDR$/"
+            },
+            {
+              "condition": "AND",
+              "key": "DPORT",
+              "operator": "=~",
+              "value": "/^$DPORT$/"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "delay_analysis_out",
+      "transformations": [],
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 30,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_INFLUXDB}",
+        "definition": "select SADDR from \"delay_analysis_out\" where time > now()-5m",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "SADDR",
+        "multi": false,
+        "name": "SADDR",
+        "options": [],
+        "query": "select SADDR from \"delay_analysis_out\" where time > now()-5m",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_INFLUXDB}",
+        "definition": "select SPORT from \"delay_analysis_out\" where \"SADDR\"=~/^$SADDR$/ and time > now()-5m",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "SPORT",
+        "multi": false,
+        "name": "SPORT",
+        "options": [],
+        "query": "select SPORT from \"delay_analysis_out\" where \"SADDR\"=~/^$SADDR$/ and time > now()-5m",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_INFLUXDB}",
+        "definition": "select DADDR from \"delay_analysis_out\" where \"SADDR\"=~/^$SADDR$/ and \"SPORT\"=$SPORT and time > now()-5m",
+        "description": null,
+        "error": {
+          "config": {
+            "data": null,
+            "headers": {
+              "X-Grafana-Org-Id": 1
+            },
+            "hideFromInspector": false,
+            "inspect": {
+              "type": "influxdb"
+            },
+            "method": "GET",
+            "params": {
+              "db": "network_subsystem",
+              "epoch": "ms",
+              "q": "select DADDR from \"delay_analysis_out\" where \"SADDR\"=~/^$/ and \"SPORT\"= and time > now()-5m"
+            },
+            "precision": "ms",
+            "retry": 0,
+            "url": "api/datasources/proxy/1/query"
+          },
+          "data": {
+            "error": "error parsing query: found AND, expected identifier, string, number, bool at line 1, char 73",
+            "message": "error parsing query: found AND, expected identifier, string, number, bool at line 1, char 73"
+          },
+          "message": "InfluxDB Error: error parsing query: found AND, expected identifier, string, number, bool at line 1, char 73"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "DADDR",
+        "multi": false,
+        "name": "DADDR",
+        "options": [],
+        "query": "select DADDR from \"delay_analysis_out\" where \"SADDR\"=~/^$SADDR$/ and \"SPORT\"=$SPORT and time > now()-5m",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_INFLUXDB}",
+        "definition": "select DPORT from \"delay_analysis_out\" WHERE \"SADDR\" =~ /^$SADDR$/ and \"SPORT\" =$SPORT and \"DADDR\" =~ /^$DADDR$/ and time>now()-5m",
+        "description": null,
+        "error": {
+          "config": {
+            "data": null,
+            "headers": {
+              "X-Grafana-Org-Id": 1
+            },
+            "hideFromInspector": false,
+            "inspect": {
+              "type": "influxdb"
+            },
+            "method": "GET",
+            "params": {
+              "db": "network_subsystem",
+              "epoch": "ms",
+              "q": "select DPORT from \"delay_analysis_out\" WHERE \"SADDR\" =~ /^$/ and \"SPORT\" = and \"DADDR\" =~ /^127\\.0\\.0\\.1$/ and time>now()-5m"
+            },
+            "precision": "ms",
+            "retry": 0,
+            "url": "api/datasources/proxy/1/query"
+          },
+          "data": {
+            "error": "error parsing query: found AND, expected identifier, string, number, bool at line 1, char 76",
+            "message": "error parsing query: found AND, expected identifier, string, number, bool at line 1, char 76"
+          },
+          "message": "InfluxDB Error: error parsing query: found AND, expected identifier, string, number, bool at line 1, char 76"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "DPORT",
+        "multi": false,
+        "name": "DPORT",
+        "options": [],
+        "query": "select DPORT from \"delay_analysis_out\" WHERE \"SADDR\" =~ /^$SADDR$/ and \"SPORT\" =$SPORT and \"DADDR\" =~ /^$DADDR$/ and time>now()-5m",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-2m",
+    "to": "now"
+  },
+  "timepicker": {
+    "hidden": false,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "",
+  "title": "delay_analysis_out",
+  "uid": "EaOwOLA4k",
+  "version": 24
+}

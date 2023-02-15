@@ -1,0 +1,28 @@
+# TODO: Add options to configure ports and credentials of InfluxDB and Grafana
+
+services:
+  influxdb:
+    image: influxdb:1.8
+    environment:
+      - INFLUXDB_DB=network_subsystem
+    ports:
+      - 8086:8086
+    volumes:
+      - influxdb-data:/var/lib/influxdb
+      - /etc/localtime:/etc/localtime:ro
+
+  grafana:
+    image: grafana/grafana-oss:9.3.6
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - /etc/localtime:/etc/localtime:ro
+      # Automatically load dashboards
+      # See also https://stackoverflow.com/a/74995091/10108192
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+
+volumes:
+  influxdb-data: {}
+  grafana-data: {}

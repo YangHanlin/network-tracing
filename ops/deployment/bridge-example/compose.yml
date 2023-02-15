@@ -1,0 +1,26 @@
+services:
+  bridge:
+    image: network_tracing:latest
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - "NTD_API_HOST=${NTD_API_HOST:-}"
+      - "NTD_API_PORT=${NTD_API_PORT:-}"
+      - "NTD_API_CORS=${NTD_API_CORS:-}"
+      - "NTD_LOGGING_LEVEL=${NTD_LOGGING_LEVEL:-}"
+      - "NTCTL_BASE_URL=${NTCTL_BASE_URL:-http://daemon:${NTD_API_PORT:-10032}}"
+      - "NTCTL_LOGGING_LEVEL=${NTCTL_LOGGING_LEVEL:-}"
+      - "NTCTL_BUFFER_SIZE=${NTCTL_BUFFER_SIZE:-}"
+      - "NTCTL_INFLUXDB_CONFIG=:env:"
+      - "INFLUXDB_V2_URL=http://influxdb:8086"
+      - "INFLUXDB_V2_ORG=-"
+    networks:
+      - analysis_default
+      - daemon_default
+    command: bash -c "ntctl events -a upload $$(ntctl start ${NTCTL_START_OPTIONS:-})"
+
+networks:
+  analysis_default:
+    external: true
+  daemon_default:
+    external: true

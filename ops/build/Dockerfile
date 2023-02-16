@@ -54,4 +54,4 @@ RUN cd /dist && \
     rm -rf /dist
 COPY $SRC_DIR/ops/build/entrypoint.sh /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
-CMD ntd
+CMD [ "ntd" ]

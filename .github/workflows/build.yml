@@ -21,6 +21,29 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -y zlib1g-dev libelf-dev llvm && \
           make -j$(nproc)
+      - name: Remove previous artifacts
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_ACTOR_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: { artifacts }} = await github.rest.actions.listArtifactsForRepo({
+              owner,
+              repo,
+            });
+            removedCount = artifacts
+              .filter(({ name }) => name === 'network_tracing-artifacts')
+              .map(({ id }) => {
+                console.log(`Removing artifact ${id}`);
+                github.rest.actions.deleteArtifact({
+                  owner,
+                  repo,
+                  artifact_id: id,
+                });
+              })
+              .map(() => 1)
+              .reduce((acc, cur) => acc + cur, 0);
+            console.log(`Removed ${removedCount} artifacts`);
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:

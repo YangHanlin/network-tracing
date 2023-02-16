@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: build
   cancel-in-progress: true
 
 jobs:

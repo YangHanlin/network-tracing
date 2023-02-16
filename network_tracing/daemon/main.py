@@ -18,7 +18,7 @@ def _create_parser() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument('-c',
                         '--config',
-                        default='/etc/network_tracing/ntd_config.json',
+                        default='/etc/network-tracing/ntd-config.json',
                         metavar='PATH',
                         help='path to configuration file')
     return parser

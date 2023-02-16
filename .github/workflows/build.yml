@@ -28,8 +28,8 @@ jobs:
       - name: Push container images
         run: |
           (echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ vars.DOCKER_USERNAME }}" --password-stdin) && \
-          docker tag network_tracing:latest "${{ vars.DOCKER_USERNAME }}/network_tracing:latest" && \
-          docker push "${{ vars.DOCKER_USERNAME }}/network_tracing:latest"
+          docker tag network-tracing:latest "${{ vars.DOCKER_USERNAME }}/network-tracing:latest" && \
+          docker push "${{ vars.DOCKER_USERNAME }}/network-tracing:latest"
       - name: Remove previous artifacts
         uses: actions/github-script@v6
         with:
@@ -41,7 +41,7 @@ jobs:
               repo,
             });
             removedCount = artifacts
-              .filter(({ name }) => name === 'network_tracing-artifacts')
+              .filter(({ name }) => name === 'network-tracing-artifacts')
               .map(({ id }) => {
                 console.log(`Removing artifact ${id}`);
                 github.rest.actions.deleteArtifact({
@@ -56,5 +56,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: network_tracing-artifacts
+          name: network-tracing-artifacts
           path: dist/

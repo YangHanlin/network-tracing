@@ -1,5 +1,5 @@
 #!/bin/bash
-# This is the entrypoint for the network_tracing image
+# This is the entrypoint for the network-tracing image
 
 set -e
 
@@ -19,8 +19,8 @@ log() {
     echo -e "[$(date '+%F %T')]" "$@"
 }
 
-NTD_CONFIG=/etc/network_tracing/ntd_config.json
-NTCTL_CONFIG=/root/.config/network_tracing/ntctl_config.json
+NTD_CONFIG=/etc/network-tracing/ntd-config.json
+NTCTL_CONFIG=/root/.config/network-tracing/ntctl-config.json
 
 title "Updating daemon config from environment variables"
 

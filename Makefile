@@ -18,15 +18,15 @@ endif
 all: distribution images operations
 
 .PHONY: distribution
-distribution: $(DIST_DIR)/network_tracing
+distribution: $(DIST_DIR)/network-tracing
 
-$(DIST_DIR)/network_tracing: network_tracing setup.py MANIFEST.in requirements.txt $(DIST_DIR)/retsnoop/retsnoop
+$(DIST_DIR)/network-tracing: network_tracing setup.py MANIFEST.in requirements.txt $(DIST_DIR)/retsnoop/retsnoop
 	$(call msg,Initializing build environment)
 	$(Q)if [[ ! -d "$(VENV_DIR)" ]]; then $(PYTHON) -m venv --system-site-packages "$(VENV_DIR)"; fi
 	$(Q)cp -f "$(DIST_DIR)/retsnoop/retsnoop" network_tracing/daemon/tracing/probes/retsnoop
 	$(call msg,Building wheels for distribution)
-	$(Q)rm -rf "$(DIST_DIR)/network_tracing"
-	$(Q)source "$(VENV_DIR)/bin/activate" && pip install -r requirements.txt && pyproject-build --outdir "$(DIST_DIR)/network_tracing" --wheel
+	$(Q)rm -rf "$(DIST_DIR)/network-tracing"
+	$(Q)source "$(VENV_DIR)/bin/activate" && pip install -r requirements.txt && pyproject-build --outdir "$(DIST_DIR)/network-tracing" --wheel
 
 $(DIST_DIR)/retsnoop/retsnoop: retsnoop
 	$(call msg,Building retsnoop)
@@ -36,23 +36,23 @@ $(DIST_DIR)/retsnoop/retsnoop: retsnoop
 	$(Q)cp -f retsnoop/src/retsnoop "$(DIST_DIR)/retsnoop/retsnoop"
 
 .PHONY: images
-images: $(DIST_DIR)/network_tracing-images.tar
+images: $(DIST_DIR)/network-tracing-images.tar
 
-$(DIST_DIR)/network_tracing-images.tar: $(DIST_DIR)/network_tracing ops/build
+$(DIST_DIR)/network-tracing-images.tar: $(DIST_DIR)/network-tracing ops/build
 	$(call msg,Building images)
-	$(Q)docker build --tag network_tracing:latest --file ops/build/Dockerfile --build-arg "BCC_TAG=$(BCC_TAG)" --build-arg "DIST_DIR=$(DIST_DIR)/network_tracing" .
-	$(call msg,Saving images to $(DIST_DIR)/network_tracing-images.tar)
-	$(Q)rm -f "$(DIST_DIR)/network_tracing-images.tar"
-	$(Q)docker save --output "$(DIST_DIR)/network_tracing-images.tar" network_tracing:latest
+	$(Q)docker build --tag network-tracing:latest --file ops/build/Dockerfile --build-arg "BCC_TAG=$(BCC_TAG)" --build-arg "DIST_DIR=$(DIST_DIR)/network-tracing" .
+	$(call msg,Saving images to $(DIST_DIR)/network-tracing-images.tar)
+	$(Q)rm -f "$(DIST_DIR)/network-tracing-images.tar"
+	$(Q)docker save --output "$(DIST_DIR)/network-tracing-images.tar" network-tracing:latest
 
 .PHONY: operations
-operations: $(DIST_DIR)/network_tracing-ops
+operations: $(DIST_DIR)/network-tracing-ops
 
-$(DIST_DIR)/network_tracing-ops: ops/deployment
+$(DIST_DIR)/network-tracing-ops: ops/deployment
 	$(call msg,Copying config for operations)
-	$(Q)rm -rf "$(DIST_DIR)/network_tracing-ops"
+	$(Q)rm -rf "$(DIST_DIR)/network-tracing-ops"
 	$(Q)mkdir -p "$(DIST_DIR)"
-	$(Q)cp -rf ops/deployment "$(DIST_DIR)/network_tracing-ops"
+	$(Q)cp -rf ops/deployment "$(DIST_DIR)/network-tracing-ops"
 
 .PHONY: clean
 clean:

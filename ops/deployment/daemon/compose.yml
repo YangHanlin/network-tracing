@@ -1,6 +1,6 @@
 services:
   daemon:
-    image: network_tracing:latest
+    image: network-tracing:latest
     privileged: true
     volumes:
       - /sys/kernel/debug:/sys/kernel/debug:rw

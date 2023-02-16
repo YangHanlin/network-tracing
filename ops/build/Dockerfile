@@ -2,7 +2,7 @@
 
 ARG BCC_TAG=latest
 ARG SRC_DIR=.
-ARG DIST_DIR=dist/network_tracing
+ARG DIST_DIR=dist/network-tracing
 
 # TODO: Build artifacts in a separate stage; currently artifacts must be
 #       pre-built and available under dist/ directory.

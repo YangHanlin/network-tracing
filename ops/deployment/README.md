@@ -1,20 +1,20 @@
 # 安装与部署
 
-**注：** 下列命令假设当前位于构建产物中的 `network_tracing-ops` 目录下。如果是在仓库 `ops/deployment` 目录下看到此文档，需要在实际执行下列命令之前通过 `make` 生成构建产物，并在构建产物目录下操作。
+**注：** 下列命令假设当前位于构建产物中的 `network-tracing-ops` 目录下。如果是在仓库 `ops/deployment` 目录下看到此文档，需要在实际执行下列命令之前通过 `make` 生成构建产物，并在构建产物目录下操作。
 
 ## 容器化部署
 
 从 GitHub 仓库 `main` 分支构建的应用镜像被推到了 Docker Hub，可以直接拉下使用：
 
 ```bash
-docker pull hanlinyang/network_tracing:latest
-docker tag hanlinyang/network_tracing:latest network_tracing:latest
+docker pull hanlinyang/network-tracing:latest
+docker tag hanlinyang/network-tracing:latest network-tracing:latest
 ```
 
 如果不想使用 Docker Hub 上的镜像，也可以从构建产物中加载镜像：
 
 ```bash
-docker load -i ../network_tracing-images.tar
+docker load -i ../network-tracing-images.tar
 ```
 
 在启动守护进程之前，需要确保其宿主机上安装了内核头文件（如通过 `sudo apt-get install -y linux-headers-$(uname -r)`）。守护进程容器中的 BCC 依赖于宿主机的内核头文件。
@@ -52,7 +52,7 @@ popd
 执行下列命令安装应用（包括守护进程 `ntd` 与 CLI 工具 `ntctl`）：
 
 ```bash
-sudo python3 -m pip install ../network_tracing/*.whl
+sudo python3 -m pip install ../network-tracing/*.whl
 ```
 
 在被观测的机器上，启动守护进程：

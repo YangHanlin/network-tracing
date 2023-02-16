@@ -1,6 +1,6 @@
 services:
   bridge:
-    image: network_tracing:latest
+    image: network-tracing:latest
     volumes:
       - /etc/localtime:/etc/localtime:ro
     environment:

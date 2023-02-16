@@ -4,7 +4,14 @@
 
 ## 容器化部署
 
-目前，构建的应用镜像 `network_tracing:latest` 还没有上传到 Docker Hub，需要手动导入：
+从 GitHub 仓库 `main` 分支构建的应用镜像被推到了 Docker Hub，可以直接拉下使用：
+
+```bash
+docker pull hanlinyang/network_tracing:latest
+docker tag hanlinyang/network_tracing:latest network_tracing:latest
+```
+
+如果不想使用 Docker Hub 上的镜像，也可以从构建产物中加载镜像：
 
 ```bash
 docker load -i ../network_tracing-images.tar

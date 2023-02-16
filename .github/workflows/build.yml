@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -21,6 +25,11 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -y zlib1g-dev libelf-dev llvm && \
           make -j$(nproc)
+      - name: Push container images
+        run: |
+          (echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ vars.DOCKER_USERNAME }}" --password-stdin) && \
+          docker tag network_tracing:latest "${{ vars.DOCKER_USERNAME }}/network_tracing:latest" && \
+          docker push "${{ vars.DOCKER_USERNAME }}/network_tracing:latest"
       - name: Remove previous artifacts
         uses: actions/github-script@v6
         with:

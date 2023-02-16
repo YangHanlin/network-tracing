@@ -2,6 +2,7 @@ services:
   daemon:
     image: network-tracing:latest
     privileged: true
+    restart: always
     volumes:
       - /sys/kernel/debug:/sys/kernel/debug:rw
       - /lib/modules:/lib/modules:ro

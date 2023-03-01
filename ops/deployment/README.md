@@ -14,7 +14,7 @@ docker tag hanlinyang/network-tracing:latest network-tracing:latest
 如果不想使用 Docker Hub 上的镜像，也可以从构建产物中加载镜像：
 
 ```bash
-docker load -i ../network-tracing-images.tar
+docker load -i ../network-tracing-images/network-tracing.tar
 ```
 
 在启动守护进程之前，需要确保其宿主机上安装了内核头文件（如通过 `sudo apt-get install -y linux-headers-$(uname -r)`）。守护进程容器中的 BCC 依赖于宿主机的内核头文件。
@@ -27,7 +27,13 @@ docker compose up -d  # 可以利用环境变量指定配置项
 popd
 ```
 
-在同一台机器或另一台机器上，启动存储、分析数据需要的 InfluxDB 与 Grafana：
+在同一台或另一台机器上，导入定制 Grafana 镜像：
+
+```bash
+docker load -i ../network-tracing-images/grafana-seu.tar
+```
+
+启动存储、分析数据需要的 InfluxDB 与 Grafana：
 
 ```bash
 pushd analysis
@@ -61,7 +67,7 @@ sudo python3 -m pip install ../network-tracing/*.whl
 ntd
 ```
 
-在同一台机器或另一台机器上部署配置 InfluxDB 与 Grafana。可以使用 `analysis` 目录下的配置直接容器化部署（见上节），也可以在本地手动部署。手动部署时，Grafana 需要的数据源与 Dashboard 配置可见 `analysis/grafana/` 目录。
+在同一台机器或另一台机器上部署配置 InfluxDB 与 Grafana（使用容器化方式部署；见上节）。
 
 使用 CLI 工具启动观测：
 
@@ -74,5 +80,5 @@ ntctl --base-url http://守护进程机器 IP:10032 start 参数
 ```bash
 export INFLUXDB_V2_URL=http://InfluxDB 机器 IP:8086
 export INFLUXDB_V2_ORG=-
-ntctl --base-url http://守护进程机器 IP:10032 events --action upload 任务 ID
+ntctl --base-url http://守护进程机器 IP:10032 events --influxdb-config ':env:' --action upload 任务 ID
 ```

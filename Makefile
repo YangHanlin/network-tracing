@@ -36,14 +36,21 @@ $(DIST_DIR)/retsnoop/retsnoop: retsnoop
 	$(Q)cp -f retsnoop/src/retsnoop "$(DIST_DIR)/retsnoop/retsnoop"
 
 .PHONY: images
-images: $(DIST_DIR)/network-tracing-images.tar
+images: $(DIST_DIR)/network-tracing-images/network-tracing.tar $(DIST_DIR)/network-tracing-images/grafana-seu.tar
 
-$(DIST_DIR)/network-tracing-images.tar: $(DIST_DIR)/network-tracing ops/build
+$(DIST_DIR)/network-tracing-images/network-tracing.tar: $(DIST_DIR)/network-tracing ops/build
 	$(call msg,Building images)
 	$(Q)docker build --tag network-tracing:latest --file ops/build/Dockerfile --build-arg "BCC_TAG=$(BCC_TAG)" --build-arg "DIST_DIR=$(DIST_DIR)/network-tracing" .
-	$(call msg,Saving images to $(DIST_DIR)/network-tracing-images.tar)
-	$(Q)rm -f "$(DIST_DIR)/network-tracing-images.tar"
-	$(Q)docker save --output "$(DIST_DIR)/network-tracing-images.tar" network-tracing:latest
+	$(call msg,Saving images to $(DIST_DIR)/network-tracing-images/network-tracing.tar)
+	$(Q)mkdir -p "$(DIST_DIR)/network-tracing-images"
+	$(Q)rm -f "$(DIST_DIR)/network-tracing-images/network-tracing.tar"
+	$(Q)docker save --output "$(DIST_DIR)/network-tracing-images/network-tracing.tar" network-tracing:latest
+
+$(DIST_DIR)/network-tracing-images/grafana-seu.tar:
+	$(call msg,Downloading customized Grafana image to $(DIST_DIR)/network-tracing-images/grafana-seu.tar)
+	$(Q)mkdir -p "$(DIST_DIR)/network-tracing-images"
+	$(Q)rm -f "$(DIST_DIR)/network-tracing-images/grafana-seu.tar"
+	$(Q)wget -O "$(DIST_DIR)/network-tracing-images/grafana-seu.tar" https://static.tree-diagram.site/grafana-seu.tar
 
 .PHONY: operations
 operations: $(DIST_DIR)/network-tracing-ops

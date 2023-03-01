@@ -13,17 +13,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
 
   grafana:
-    image: grafana/grafana-oss:9.3.6
+    image: grafana:seu
     restart: always
     ports:
       - 3000:3000
     volumes:
       - grafana-data:/var/lib/grafana
       - /etc/localtime:/etc/localtime:ro
-      # Automatically load dashboards
-      # See also https://stackoverflow.com/a/74995091/10108192
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
 
 volumes:
   influxdb-data: {}

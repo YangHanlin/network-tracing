@@ -144,10 +144,19 @@ class _UploadAction(_BaseAction):
 
         return [point, point_bar]
 
+    def _format_runqslower(self, event: TracingEvent):
+        # eBPF 获取到的 PID 在用户态看实际是线程 ID（TID）
+        return Point('runqueue_delay') \
+            .time(event.timestamp) \
+            .field('task', event.event['task']) \
+            .field('tid', event.event['pid']) \
+            .field('delta_us', event.event['delta_us'])
+
     _event_formatters = {
         'delay_analysis_out': _format_delay_analysis_out,
         'delay_analysis_out_v6': _format_delay_analysis_out_v6,
         'retsnoop': _format_retsnoop,
+        'runqslower': _format_runqslower,
     }
 
     @staticmethod

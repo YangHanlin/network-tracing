@@ -9,9 +9,10 @@ class DataclassConversionMixin:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]):
-        # FIXME: Type checker complains about this
-        if is_dataclass(cls):
-            field_names = set(map(lambda f: f.name, fields(cls)))
+        # This is to prevent the type checker deducing `cls` to `Type[DataclassInstance] | Type[Self@DataclassConversionMixin]`
+        _cls = cls
+        if is_dataclass(_cls):
+            field_names = set(map(lambda f: f.name, fields(_cls)))
             filtered_data = {
                 key: value
                 for key, value in data.items() if key in field_names

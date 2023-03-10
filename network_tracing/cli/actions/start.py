@@ -156,4 +156,5 @@ def run(options: Union[dict[str, Any], Options]):
             e,
         ),
               file=sys.stderr)
+        logger.debug('Exception information:', exc_info=e)
         return 1

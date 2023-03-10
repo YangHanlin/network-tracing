@@ -1,3 +1,4 @@
+import logging
 import sys
 from argparse import ArgumentParser, _SubParsersAction
 from dataclasses import dataclass
@@ -6,6 +7,8 @@ from typing import Any, Union
 from network_tracing.cli.api import ApiClient, ApiException
 from network_tracing.cli.constants import DEFAULT_PROGRAM_NAME
 from network_tracing.cli.models import BaseOptions
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -32,6 +35,7 @@ def run(options: Union[dict[str, Any], Options]):
             e,
         ),
               file=sys.stderr)
+        logger.debug('Exception information:', exc_info=e)
         return 1
 
     print(f'ID: {tracing_task.id}')

@@ -1,8 +1,13 @@
+import logging
 from dataclasses import dataclass, field
+from functools import cache
+from socket import AF_INET, AF_INET6, inet_pton
 from time import CLOCK_MONOTONIC, CLOCK_REALTIME, clock_gettime_ns
-from typing import Iterable, NoReturn, Optional, Protocol
+from typing import Iterable, NoReturn, Optional, Protocol, Union
 
 from network_tracing.daemon.models import BackgroundTask
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -70,6 +75,81 @@ class Ktime:
 
     def __new__(cls: type['Ktime']) -> NoReturn:
         raise Exception('No instantiation for this class')
+
+
+class IPMatcher:
+
+    def __init__(self, ips_or_cidrs: Union[str, Iterable[str]]) -> None:
+        self._ip4_ranges, self._ip6_ranges = self._compile_ranges(ips_or_cidrs)
+
+    def match(self, ip: str) -> bool:
+        if self._is_ip6(ip):
+            return self.match_ip6_bytes(inet_pton(AF_INET6, ip))
+        else:
+            return self.match_ip4_bytes(inet_pton(AF_INET, ip))
+
+    def match_ip4_bytes(self, ip_bytes: bytes) -> bool:
+        return self._match_bytes(ip_bytes, self._ip4_ranges)
+
+    def match_ip6_bytes(self, ip_bytes: bytes) -> bool:
+        return self._match_bytes(ip_bytes, self._ip6_ranges)
+
+    @staticmethod
+    def _compile_ranges(
+        ips_or_cidrs: Union[str, Iterable[str]]
+    ) -> tuple[tuple[tuple[int, int], ...], tuple[tuple[int, int], ...]]:
+        ip4_range_list: list[tuple[int, int]] = []
+        ip6_range_list: list[tuple[int, int]] = []
+
+        if not isinstance(ips_or_cidrs, Iterable):
+            ips_or_cidrs = [ips_or_cidrs]
+
+        for ip_or_cidr in ips_or_cidrs:
+            ip, block, *dummy = (*ip_or_cidr.split('/', maxsplit=1), None)
+            if IPMatcher._is_ip6(ip):  # IPv6
+                ip_binary = IPMatcher._binary_from_bytes(
+                    inet_pton(AF_INET6, ip))
+                if block is None:
+                    ip6_range_list.append((ip_binary, ip_binary + 1))
+                else:
+                    block = int(block)
+                    start = ip_binary & ~((0x01 << 128 - block) - 1)
+                    end = start + (0x01 << 128 - block)
+                    ip6_range_list.append((start, end))
+            else:  # IPv4
+                ip_binary = IPMatcher._binary_from_bytes(inet_pton(
+                    AF_INET, ip))
+                if block is None:
+                    ip4_range_list.append((ip_binary, ip_binary + 1))
+                else:
+                    block = int(block)
+                    start = ip_binary & ~((0x01 << 32 - block) - 1)
+                    end = start + (0x01 << 32 - block)
+                    ip4_range_list.append((start, end))
+
+        return tuple(ip4_range_list), tuple(ip6_range_list)
+
+    @staticmethod
+    def _is_ip6(ip: str) -> bool:
+        return ':' in ip
+
+    @staticmethod
+    def _binary_from_bytes(b: bytes) -> int:
+        return int.from_bytes(b, byteorder='big', signed=False)
+
+    @staticmethod
+    @cache
+    def _match_bytes(ip_bytes: bytes, ip_ranges: tuple[tuple[int, int],
+                                                       ...]) -> bool:
+        ip_binary = IPMatcher._binary_from_bytes(ip_bytes)
+        for ip_range in ip_ranges:
+            start, end = ip_range
+            if ip_binary >= start and ip_binary < end:
+                logger.debug(
+                    'Found matching range [0x%x, 0x%x) for IP 0x%x (%s)',
+                    start, end, ip_binary, ip_bytes)
+                return True
+        return False
 
 
 class _Application(Protocol):

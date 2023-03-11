@@ -3,16 +3,17 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from signal import SIGINT
-from socket import AF_INET, AF_INET6, inet_ntop, inet_pton
+from socket import AF_INET, inet_ntop
 from struct import pack
 from subprocess import PIPE, Popen
 from threading import Lock, Thread
 from time import sleep
-from typing import IO, Any, Iterable, Optional, Union, cast
+from typing import IO, Any, Optional, Union, cast
 
 from network_tracing.common.utilities import DataclassConversionMixin
 from network_tracing.daemon.tracing.probes.models import (BaseProbe,
                                                           EventCallback)
+from network_tracing.daemon.utilities import IPMatcher
 
 logger = logging.getLogger(__name__)
 
@@ -25,68 +26,11 @@ class ProbeOptions(DataclassConversionMixin):
     """Ignore flows whose source address matches any of give IP addresses or ranges (in CIDR notation)."""
 
     def __post_init__(self):
-        self._ip4_ranges, self._ip6_ranges = self._convert_ip_ranges(
-            self.ignore)
+        self._ignore_matcher = IPMatcher(self.ignore)
 
-    def is_ignored(self, ip: str) -> Optional[tuple[int, int]]:
-        if ':' in ip:
-            ip_binary = self.ip_binary_from_bytes(inet_pton(AF_INET6, ip))
-            return self.is_ip6_ignored(ip_binary)
-        else:
-            ip_binary = self.ip_binary_from_bytes(inet_pton(AF_INET, ip))
-            return self.is_ip4_ignored(ip_binary)
-
-    def is_ip4_ignored(self, ip_binary: int) -> Optional[tuple[int, int]]:
-        for ip_range in self._ip4_ranges:
-            start, end = ip_range
-            if ip_binary >= start and ip_binary < end:
-                return ip_range
-        return None
-
-    def is_ip6_ignored(self, ip_binary: int) -> Optional[tuple[int, int]]:
-        for ip_range in self._ip6_ranges:
-            start, end = ip_range
-            if ip_binary >= start and ip_binary < end:
-                return ip_range
-        return None
-
-    @staticmethod
-    def _convert_ip_ranges(
-        ips_or_cidrs: Union[str, list[str]]
-    ) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
-        ip4_ranges: list[tuple[int, int]] = []
-        ip6_ranges: list[tuple[int, int]] = []
-
-        if not isinstance(ips_or_cidrs, Iterable):
-            ips_or_cidrs = [ips_or_cidrs]
-        for ip_or_cidr in ips_or_cidrs:
-            ip, block, *dummy = (*ip_or_cidr.split('/', maxsplit=1), None)
-            if ':' in ip:  # IPv6
-                ip_binary = ProbeOptions.ip_binary_from_bytes(
-                    inet_pton(AF_INET6, ip))
-                if block is None:
-                    ip6_ranges.append((ip_binary, ip_binary + 1))
-                else:
-                    block = int(block)
-                    start = ip_binary & ~((0x01 << 128 - block) - 1)
-                    end = start + (0x01 << 128 - block)
-                    ip6_ranges.append((start, end))
-            else:  # IPv4
-                ip_binary = ProbeOptions.ip_binary_from_bytes(
-                    inet_pton(AF_INET, ip))
-                if block is None:
-                    ip4_ranges.append((ip_binary, ip_binary + 1))
-                else:
-                    block = int(block)
-                    start = ip_binary & ~((0x01 << 32 - block) - 1)
-                    end = start + (0x01 << 32 - block)
-                    ip4_ranges.append((start, end))
-
-        return ip4_ranges, ip6_ranges
-
-    @staticmethod
-    def ip_binary_from_bytes(b: bytes) -> int:
-        return int.from_bytes(b, byteorder='big', signed=False)
+    @property
+    def ignore_matcher(self):
+        return self._ignore_matcher
 
 
 @dataclass
@@ -286,11 +230,7 @@ class Probe(BaseProbe):
                 return
 
             saddr_bytes = pack('I', int(function_entry.group('saddr')))
-            saddr_binary = self._options.ip_binary_from_bytes(saddr_bytes)
-            if (ignored_range := self._options.is_ip4_ignored(saddr_binary)):
-                logger.debug(
-                    'Dropped an event because the source address %08x falls in an ignored range [%08x, %08x)',
-                    saddr_binary, *ignored_range)
+            if self._options.ignore_matcher.match_ip4_bytes(saddr_bytes):
                 context.event = None
                 return
 

@@ -1,4 +1,5 @@
 import logging
+from numbers import Integral
 import sys
 from argparse import ArgumentParser, _SubParsersAction
 from copy import deepcopy
@@ -83,9 +84,9 @@ class _UploadAction(_BaseAction):
                 self._write_api.write(bucket='network_subsystem', record=point)
 
     def _format_delay_analysis_out(self, event: TracingEvent):
-        # The following type checking error '"int" is incompatible with "Integral"' seems a false positive
+        timestamp: Integral = event.timestamp  # type: ignore
         return Point('delay_analysis_out') \
-            .time(event.timestamp) \
+            .time(timestamp) \
             .field('SADDR', event.event['parsed']['saddr']) \
             .field('SPORT', event.event['parsed']['sport']) \
             .field('DADDR', event.event['parsed']['daddr']) \
@@ -98,8 +99,9 @@ class _UploadAction(_BaseAction):
             .field('TIME_TCP', event.event['parsed']['tcp_time'])
 
     def _format_delay_analysis_out_v6(self, event: TracingEvent):
+        timestamp: Integral = event.timestamp  # type: ignore
         return Point('delay_analysis_out_v6') \
-            .time(event.timestamp) \
+            .time(timestamp) \
             .field('SADDR', event.event['parsed']['saddr']) \
             .field('SPORT', event.event['parsed']['sport']) \
             .field('DADDR', event.event['parsed']['daddr']) \
@@ -180,9 +182,10 @@ class _UploadAction(_BaseAction):
         return points
 
     def _format_runqslower(self, event: TracingEvent):
+        timestamp: Integral = event.timestamp  # type: ignore
         # eBPF 获取到的 PID 在用户态看实际是线程 ID（TID）
         return Point('runqueue_delay') \
-            .time(event.timestamp) \
+            .time(timestamp) \
             .field('task', event.event['task']) \
             .field('tid', event.event['pid']) \
             .field('delta_us', event.event['delta_us'])

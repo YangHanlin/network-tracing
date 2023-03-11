@@ -255,7 +255,7 @@ class Probe(BaseProbe):
                                           line)) is None:
                 return
 
-            if context.curr_depth < 0:
+            if context.curr_depth < 0:  # 避免前面数据丢失，只剩退出的函数
                 context.event = None
                 return
 
@@ -267,7 +267,7 @@ class Probe(BaseProbe):
             process_functions[name] = flow_functions.get(name, 0.0) + time
             if mark == '←' and name == '__tcp_transmit_skb':
                 context.curr_depth -= 1
-                if context.curr_depth < -1:
+                if context.curr_depth < -1:  # 应对一次进去多次退出的特殊情况
                     context.event = None
                     return
 

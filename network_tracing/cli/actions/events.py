@@ -18,7 +18,7 @@ from network_tracing.common.models import TracingEvent
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_EVENT_BUFFER_SIZE = 65536
+DEFAULT_EVENT_BUFFER_SIZE = 4096
 
 
 @dataclass(kw_only=True)
@@ -120,29 +120,64 @@ class _UploadAction(_BaseAction):
         data['PNAME'] = data.pop('pname')
         data['TNAME'] = data.pop('tname')
         data.update(data.pop('functions'))
+        flows = data.pop('flows')
 
-        point = Point.from_dict({
-            'measurement': 'function_duration',
-            'time': timestamp,
-            'fields': data,
-        })
+        points: list[Point] = []
 
-        column_name = '{}:{}-{}:{}'.format(
-            data.pop('PID'),
-            data.pop('TID'),
-            data.pop('PNAME'),
-            data.pop('TNAME'),
+        # points.append(
+        #     Point.from_dict({
+        #         'measurement': 'function_duration',
+        #         'time': timestamp,
+        #         'fields': data,
+        #     }))
+
+        column_name = '{}:{}_{}:{}'.format(
+            data['PID'],
+            data['TID'],
+            data['PNAME'],
+            data['TNAME'],
         )
-        point_bar = Point.from_dict({
-            'measurement': 'function_duration_bar',
-            'time': timestamp,
-            'tags': {
-                'column_name': column_name,
-            },
-            'fields': data,
-        })
+        points.append(
+            Point.from_dict({
+                'measurement': 'function_duration_bar',
+                'time': timestamp,
+                'tags': {
+                    'column_name': column_name,
+                },
+                'fields': data,
+            }))
 
-        return [point, point_bar]
+        for flow_data in flows:
+            flow_data['SADDR'] = flow_data.pop('saddr')
+            flow_data['SPORT'] = flow_data.pop('sport')
+            flow_data['DADDR'] = flow_data.pop('daddr')
+            flow_data['DPORT'] = flow_data.pop('dport')
+            flow_data.update(flow_data.pop('functions'))
+
+            # points.append(
+            #     Point.from_dict({
+            #         'measurement': 'function_duration_flow',
+            #         'time': timestamp,
+            #         'fields': flow_data,
+            #     }))
+
+            column_name = '{}:{}_{}:{}'.format(
+                flow_data['SADDR'],
+                flow_data['SPORT'],
+                flow_data['DADDR'],
+                flow_data['DPORT'],
+            )
+            points.append(
+                Point.from_dict({
+                    'measurement': 'function_duration_flow_bar',
+                    'time': timestamp,
+                    'tags': {
+                        'column_name': column_name,
+                    },
+                    'fields': flow_data,
+                }))
+
+        return points
 
     def _format_runqslower(self, event: TracingEvent):
         # eBPF 获取到的 PID 在用户态看实际是线程 ID（TID）

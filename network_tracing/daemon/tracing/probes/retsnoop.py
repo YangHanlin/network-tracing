@@ -263,6 +263,11 @@ class Probe(BaseProbe):
             curr_depth: int = field(default=-1)
             max_depth: int = field(default=-1)
 
+            def reset(self) -> None:
+                self.event = None
+                self.curr_depth = -1
+                self.max_depth = -1
+
         context = Context()
 
         def handle_header(line: str):
@@ -274,6 +279,7 @@ class Probe(BaseProbe):
 
             header_fields = header.groupdict()
             header_fields['timestamp'] = int(header_fields['timestamp'])
+            context.reset()
             context.event = ProbeEvent.from_dict(header_fields)
 
         def handle_missing_record(line: str):

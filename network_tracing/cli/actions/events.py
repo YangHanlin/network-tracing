@@ -121,7 +121,12 @@ class _UploadAction(_BaseAction):
         data['TID'] = data.pop('tid')
         data['PNAME'] = data.pop('pname')
         data['TNAME'] = data.pop('tname')
-        data.update(data.pop('functions'))
+
+        functions = data.pop('functions')
+        if not functions:
+            return []
+        data.update(functions)
+
         flows = data.pop('flows')
 
         points: list[Point] = []
@@ -154,7 +159,11 @@ class _UploadAction(_BaseAction):
             flow_data['SPORT'] = flow_data.pop('sport')
             flow_data['DADDR'] = flow_data.pop('daddr')
             flow_data['DPORT'] = flow_data.pop('dport')
-            flow_data.update(flow_data.pop('functions'))
+
+            flow_functions = flow_data.pop('functions')
+            if not flow_functions:
+                continue
+            flow_data.update(flow_functions)
 
             # points.append(
             #     Point.from_dict({

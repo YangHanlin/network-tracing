@@ -17,9 +17,108 @@ from network_tracing.daemon.utilities import IPMatcher
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_TRACED_FUNCTIONS = [
+    # Key functions
+    'lock_sock_nested',
+    'sk_stream_alloc_skb',
+    'queue_work_on',
+    'queue_delayed_work_on',
+    'schedule',
+    'dev_queue_xmit',
+    'dev_hard_start_xmit',
+    'tcp_sendmsg',
+    'mptcp_write_xmit',
+    'full_mesh_create_subflows',
+    'mptcp_backlog_rcv',
+    'ip_queue_xmit',
+    # Other functions
+    '_raw_spin_lock',
+    '_raw_spin_lock_bh',
+    '_raw_spin_unlock_bh',
+    '_raw_spin_lock_irq',
+    'sk_page_frag_refill',
+    'skb_clone',
+    'kmem_cache_alloc',
+    'kmem_cache_alloc_node',
+    '__pskb_copy_fclone',
+    '__queue_work',
+    'get_work_pool',
+    'insert_work',
+    'wake_up_process',
+    'netdev_pick_tx',
+    'xmit_one',
+    'ndo_start_xmit',
+    'igb_xmit_frame',
+    'tcp_sendmsg_locked',
+    'tcp_send_mss',
+    'tcp_push',
+    '__tcp_push_pending_frames',
+    'tcp_write_xmit',
+    '__tcp_transmit_skb',
+    'tcp_event_new_data_sent',
+    'tcp_schedule_loss_probe',
+    'tcp_cwnd_test',
+    'tcp_established_options',
+    'tcp_options_write',
+    'tcp_select_window',
+    'mptcp_current_mss',
+    'mptcp_select_size',
+    'mptcp_next_segment',
+    'mptcp_handle_options',
+    '__ip_local_out',
+    'ip_output',
+    'ip_copy_addrs',
+    'ip_finish_output',
+    # Previously traced functions
+    'raw_spin_*lock',
+    'spin_lock',
+    'spin_lock_irq',
+    'lock_sock',
+    'context_switch',
+    'queue_work_on',
+    'netdev_core_pick_tx',
+    'sch_direct_xmit',
+    'net_tx_action',
+    'sk_stream_alloc_skb',
+    'skb_add_data_nocache',
+    # 'skb_clone',  # duplicate
+    'pskb_copy',
+    '__pskb_copy_fclone',
+    'skb_copy',
+    '__qdisc_run',
+    '*sock_sendmsg*',
+    # 'tcp_sendmsg*',  # duplicate
+    # '*tcp_write_xmit',  # duplicate
+    # 'ip_output',  # duplicate
+    '__dev_xmit_skb',
+]
+
+KEY_TRACED_FUNCTIONS = [
+    # Key functions
+    'lock_sock_nested',
+    'sk_stream_alloc_skb',
+    'queue_work_on',
+    'queue_delayed_work_on',
+    'schedule',
+    'dev_queue_xmit',
+    'dev_hard_start_xmit',
+    'tcp_sendmsg',
+    'mptcp_write_xmit',
+    'full_mesh_create_subflows',
+    'mptcp_backlog_rcv',
+    'ip_queue_xmit',
+]
+
 
 @dataclass
 class ProbeOptions(DataclassConversionMixin):
+
+    traced_functions: list[str] = field(
+        default_factory=lambda: DEFAULT_TRACED_FUNCTIONS)
+    """Functions to trace."""
+
+    trace_key_functions_only: bool = field(default=False)
+    """Trace key functions only; this option overrides `traced_functions`."""
 
     ignore: Union[str,
                   list[str]] = field(default_factory=lambda: ['127.0.0.0/8'])
@@ -27,6 +126,8 @@ class ProbeOptions(DataclassConversionMixin):
 
     def __post_init__(self):
         self._ignore_matcher = IPMatcher(self.ignore)
+        if self.trace_key_functions_only:
+            self.traced_functions = KEY_TRACED_FUNCTIONS[:]
 
     @property
     def ignore_matcher(self):
@@ -58,56 +159,12 @@ class ProbeEvent(DataclassConversionMixin):
 
 class Probe(BaseProbe):
 
-    _ARGS = [
+    _BASE_ARGS = [
         Path(__file__).parent / 'retsnoop',
         '-T',
         '-S',
         '-e',
         '__tcp_transmit_skb',
-        '-a',
-        'raw_spin_*lock',
-        '-a',
-        'spin_lock',
-        '-a',
-        'spin_lock_irq',
-        '-a',
-        'lock_sock',
-        '-a',
-        'context_switch',
-        '-a',
-        'queue_work_on',
-        '-a',
-        'netdev_core_pick_tx',
-        '-a',
-        'sch_direct_xmit',
-        '-a',
-        'net_tx_action',
-        '-a',
-        'sk_stream_alloc_skb',
-        '-a',
-        'skb_add_data_nocache',
-        '-a',
-        'skb_clone',
-        '-a',
-        'pskb_copy',
-        '-a',
-        '__pskb_copy_fclone',
-        '-a',
-        'skb_copy',
-        '-a',
-        '__qdisc_run',
-        '-a',
-        '*sock_sendmsg*',
-        '-a',
-        'tcp_sendmsg*',
-        '-a',
-        '*tcp_write_xmit',
-        '-a',
-        'ip_output',
-        '-a',
-        '__dev_xmit_skb',
-        '-a',
-        'sch_direct_xmit',
     ]
 
     _RE_HEADER = re.compile(
@@ -178,8 +235,14 @@ class Probe(BaseProbe):
                 logger.warn('Cannot stop retsnoop process; killing')
                 process.kill()
 
+    def _build_process_args(self) -> list[Union[str, Path]]:
+        args = self._BASE_ARGS[:]
+        for traced_function in self._options.traced_functions:
+            args.extend(['-a', traced_function])
+        return args
+
     def _create_process(self) -> Popen:
-        args = self._ARGS
+        args = self._build_process_args()
         logger.debug('Starting retsnoop with command %s',
                      ' '.join(map(lambda arg: "'{}'".format(arg), args)))
 

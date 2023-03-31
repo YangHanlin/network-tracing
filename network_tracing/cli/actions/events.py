@@ -117,6 +117,7 @@ class _UploadAction(_BaseAction):
         timestamp = event.timestamp
         data: dict[str, Any] = deepcopy(event.event)
         data.pop('timestamp')
+        data['time_stamp'] = timestamp
         data['PID'] = data.pop('pid')
         data['TID'] = data.pop('tid')
         data['PNAME'] = data.pop('pname')
@@ -155,6 +156,7 @@ class _UploadAction(_BaseAction):
             }))
 
         for flow_data in flows:
+            flow_data['time_stamp'] = timestamp
             flow_data['SADDR'] = flow_data.pop('saddr')
             flow_data['SPORT'] = flow_data.pop('sport')
             flow_data['DADDR'] = flow_data.pop('daddr')

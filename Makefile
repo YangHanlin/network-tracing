@@ -64,6 +64,7 @@ $(DIST_DIR)/network-tracing-ops: ops/deployment
 .PHONY: clean
 clean:
 	$(call msg,Cleaning)
+	$(Q)rm -rf network_tracing/daemon/tracing/probes/retsnoop
 	$(Q)rm -rf $(DIST_DIR)
 	$(Q)rm -rf $(VENV_DIR)
 	$(Q)make -C retsnoop/src/ clean

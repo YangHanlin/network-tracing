@@ -263,6 +263,7 @@ class Probe(BaseProbe):
             event: Optional[ProbeEvent] = field(default=None)
             curr_depth: int = field(default=-1)
             max_depth: int = field(default=-1)
+            ignored_count: int = field(default=0)
 
             def reset(self) -> None:
                 self.event = None
@@ -290,6 +291,7 @@ class Probe(BaseProbe):
 
             if re.match(self._RE_MISSING_RECORD, line):
                 context.event = None
+                logger.debug('Dropped an event (missing record)')
                 return
 
         def handle_function_entry(line: str):
@@ -303,7 +305,13 @@ class Probe(BaseProbe):
             saddr_bytes = pack('I', int(function_entry.group('saddr')))
             if self._options.ignore_matcher.match_ip4_bytes(saddr_bytes):
                 context.event = None
+                context.ignored_count += 1
                 return
+
+            if context.ignored_count:
+                logger.debug('Dropped %d event(s) (ignored source address)',
+                             context.ignored_count)
+                context.ignored_count = 0
 
             if function_entry.group('name') == '__tcp_transmit_skb':
                 sport, daddr_int, dport = map(
@@ -328,6 +336,7 @@ class Probe(BaseProbe):
 
             if context.curr_depth < 0:  # 避免前面数据丢失，只剩退出的函数
                 context.event = None
+                logger.debug('Dropped an event (curr_depth < 0)')
                 return
 
             mark, name, time_str = function_exit.group('mark', 'name', 'time')
@@ -340,6 +349,7 @@ class Probe(BaseProbe):
                 context.curr_depth -= 1
                 if context.curr_depth < -1:  # 应对一次进去多次退出的特殊情况
                     context.event = None
+                    logger.debug('Dropped an event (curr_depth < -1)')
                     return
 
         def handle_tail(line: str):

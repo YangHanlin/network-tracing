@@ -167,8 +167,9 @@ class Probe(BaseProbe):
         '__tcp_transmit_skb',
     ]
 
+    # FIXME: swapper/3/swapper/3 is parsed into {'tname': 'swapper/3/swapper', 'pname': '3'} instead of {'tname': 'swapper/3', 'pname': 'swapper/3'}
     _RE_HEADER = re.compile(
-        r'(?P<timestamp>\d{19}) -> .* TID/PID (?P<tid>\d*)\/(?P<pid>\d*) \((?P<tname>\w*)\/(?P<pname>\w*)\)',
+        r'(?P<timestamp>\d{19}) -> .* TID/PID (?P<tid>\d*)\/(?P<pid>\d*) \((?P<tname>.*)\/(?P<pname>.*)\)',
         re.U)
     _RE_MISSING_RECORD = re.compile(r'‼ ... missing.*', re.U)
     _RE_FUNCTION_ENTRY = re.compile(

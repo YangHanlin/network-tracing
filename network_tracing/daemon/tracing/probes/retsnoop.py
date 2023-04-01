@@ -278,7 +278,8 @@ class Probe(BaseProbe):
                 return
 
             header_fields = header.groupdict()
-            header_fields['timestamp'] = int(header_fields['timestamp'])
+            for field in ('timestamp', 'pid', 'tid'):
+                header_fields[field] = int(header_fields[field])
             context.reset()
             context.event = ProbeEvent.from_dict(header_fields)
 

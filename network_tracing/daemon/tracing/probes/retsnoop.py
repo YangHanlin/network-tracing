@@ -8,7 +8,7 @@ from struct import pack
 from subprocess import PIPE, Popen
 from threading import Lock, Thread
 from time import sleep
-from typing import IO, Any, Optional, Union, cast
+from typing import IO, Any, Optional, TextIO, Union, cast
 
 from network_tracing.common.utilities import DataclassConversionMixin
 from network_tracing.daemon.tracing.probes.models import (BaseProbe,
@@ -124,6 +124,9 @@ class ProbeOptions(DataclassConversionMixin):
                   list[str]] = field(default_factory=lambda: ['127.0.0.0/8'])
     """Ignore flows whose source address matches any of give IP addresses or ranges (in CIDR notation)."""
 
+    log_path: Optional[str] = field(default=None)
+    """If not `None`, copy stdout from `retsnoop` to specified path."""
+
     def __post_init__(self):
         self._ignore_matcher = IPMatcher(self.ignore)
         if self.trace_key_functions_only:
@@ -189,6 +192,7 @@ class Probe(BaseProbe):
         self._process: Optional[Popen[str]] = None
         self._stdout_thread: Optional[Thread] = None
         self._stderr_thread: Optional[Thread] = None
+        self._log_file: Optional[TextIO] = None
 
     def start(self) -> None:
         if self._running:
@@ -197,9 +201,20 @@ class Probe(BaseProbe):
         with self._lock:
             self._process = self._create_process()
             self._running = True
+            if self._options.log_path is not None:
+                try:
+                    self._log_file = open(self._options.log_path,
+                                          'a',
+                                          encoding='utf-8')
+                except Exception as e:
+                    logger.warn(
+                        'Encountered an error while opening log file; will not copy stdout of `retsnoop`',
+                        exc_info=e)
+
             self._stdout_thread = Thread(target=self._parse_process_stdout,
                                          daemon=True)
             self._stdout_thread.start()
+
             self._stderr_thread = Thread(target=self._parse_process_stderr,
                                          daemon=True)
             self._stderr_thread.start()
@@ -236,6 +251,10 @@ class Probe(BaseProbe):
                 logger.warn('Cannot stop retsnoop process; killing')
                 process.kill()
 
+            if self._log_file is not None:
+                self._log_file.close()
+                self._log_file = None
+
     def _build_process_args(self) -> list[Union[str, Path]]:
         args = self._BASE_ARGS[:]
         for traced_function in self._options.traced_functions:
@@ -257,6 +276,7 @@ class Probe(BaseProbe):
 
     def _parse_process_stdout(self):
         process_stdout: IO[str] = self._process.stdout  # type: ignore
+        log_file: Optional[TextIO] = self._log_file
 
         @dataclass
         class Context:
@@ -377,7 +397,10 @@ class Probe(BaseProbe):
 
         while self._running:
             try:
-                line = process_stdout.readline().strip()
+                line = process_stdout.readline()
+                if log_file is not None:
+                    log_file.write(line)
+                line = line.strip()
                 if not line:
                     continue
                 for handler in (handle_header, handle_missing_record,

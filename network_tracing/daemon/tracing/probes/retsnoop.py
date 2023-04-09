@@ -167,7 +167,7 @@ class Probe(BaseProbe):
         '-T',
         '-S',
         '-e',
-        '__tcp_transmit_skb',
+        'mptcp_sendmsg',
     ]
 
     # FIXME: swapper/3/swapper/3 is parsed into {'tname': 'swapper/3/swapper', 'pname': '3'} instead of {'tname': 'swapper/3', 'pname': 'swapper/3'}
@@ -347,7 +347,7 @@ class Probe(BaseProbe):
                              context.ignored_count)
                 context.ignored_count = 0
 
-            if function_entry.group('name') == '__tcp_transmit_skb':
+            if function_entry.group('name') == 'mptcp_sendmsg':
                 sport, daddr_int, dport = map(
                     int, function_entry.group('sport', 'daddr', 'dport'))
                 daddr_bytes = pack('I', daddr_int)
@@ -379,7 +379,7 @@ class Probe(BaseProbe):
             flow_functions[name] = flow_functions.get(name, 0.0) + time
             process_functions = context.event.functions
             process_functions[name] = flow_functions.get(name, 0.0) + time
-            if mark == '←' and name == '__tcp_transmit_skb':
+            if mark == '←' and name == 'mptcp_sendmsg':
                 context.curr_depth -= 1
                 if context.curr_depth < -1:  # 应对一次进去多次退出的特殊情况
                     context.event = None
